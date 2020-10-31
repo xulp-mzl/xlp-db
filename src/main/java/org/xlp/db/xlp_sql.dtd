@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!ELEMENT xlp (sqls*, file*)>
+<!ELEMENT sqls (com*, sql*)>
+<!ATTLIST sqls
+		id ID #REQUIRED
+		mark CDATA ""
+>
+<!ELEMENT com (#PCDATA)>
+<!ATTLIST com
+		id CDATA #REQUIRED
+>	
+<!ELEMENT sql (sql-ele?, order-by?, group-by?, param*)>
+<!ATTLIST sql
+		id CDATA #REQUIRED
+		comment CDATA ""
+>
+<!ELEMENT sql-ele (#PCDATA)>
+<!ELEMENT order-by (#PCDATA)>
+<!ELEMENT group-by (#PCDATA)>
+<!ELEMENT param EMPTY>
+<!ATTLIST param 
+		flag (map|obj) #REQUIRED
+		joint (false|true) "false"
+		col CDATA #IMPLIED
+		type (number|string|date|stream|bool) "string"
+		op (like|eq|not_eq|lt|gt|le|ge|in|not_in) #IMPLIED
+		fn CDATA #REQUIRED
+		connector (and|or|blank) "blank"
+		trim (false|true) "false"
+		f_v CDATA #IMPLIED
+>
+<!ELEMENT file EMPTY>
+<!ATTLIST file
+		ref-file CDATA #REQUIRED
+>
