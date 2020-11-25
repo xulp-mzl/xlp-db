@@ -14,7 +14,7 @@
 		<xlp.jar.versionNo>0.0.1-SNAPSHOT</xlp.jar.versionNo>
 		<cglib.versionNo>3.3.0</cglib.versionNo>
 		<log4j.versionNo>1.2.17</log4j.versionNo>
-		<dom4j.versionNo>2.0.0</dom4j.versionNo>
+		<dom4j.versionNo>2.1.3</dom4j.versionNo>
 	</properties>
 
 	<dependencies>
