@@ -6,7 +6,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * 对数据库表的操作抽象类
@@ -20,7 +22,7 @@ import org.apache.log4j.Logger;
  */
 public abstract class AbstractDBOption {
 	//记录日志
-	protected final static Logger LOGGER = Logger.getLogger(AbstractDBOption.class);
+	protected final static Logger LOGGER = LoggerFactory.getLogger(AbstractDBOption.class);
 	//未发现
 	public final static int NOT_FOUND = -1;
 

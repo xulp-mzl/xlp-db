@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.sql.limit.Limit;
 import org.xlp.db.sql.table.Table;
@@ -41,7 +42,7 @@ public class ManyTablesQuerySQL implements SQL{
 	//部分SQL
 	private StringBuilder otherPartSql = new StringBuilder();
 	//日志记录
-	protected final static Logger LOGGER = Logger.getLogger(ManyTablesQuerySQL.class);
+	protected final static Logger LOGGER = LoggerFactory.getLogger(ManyTablesQuerySQL.class);
 	//bean类型
 	protected Class<?> beanClass;
 	//标记是否去除重复的数据

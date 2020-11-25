@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.page.Page;
 import org.xlp.db.sql.AvgSQL;
@@ -53,7 +54,7 @@ import org.xlp.utils.collection.XLPCollectionUtil;
  */
 public final class DBSession{
 	//日志记录
-	private final static Logger LOGGER = Logger.getLogger(DBSession.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(DBSession.class);
 	
 	private DBSession() {
 		super();

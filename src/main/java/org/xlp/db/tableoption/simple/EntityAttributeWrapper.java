@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.sql.ManyTablesQuerySQL;
 import org.xlp.db.sql.QuerySQL;
@@ -37,7 +38,7 @@ import org.xlp.javabean.PropertyDescriptor;
  */
 public class EntityAttributeWrapper<T> {
 	//日志记录器
-	private final static Logger LOGGER = Logger.getLogger(EntityAttributeWrapper.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(EntityAttributeWrapper.class);
 	//实体类型
 	private Class<?> entityClass;
 	//标记构造此对象是用实体对象还是实体类型构造

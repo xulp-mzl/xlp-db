@@ -1,7 +1,8 @@
 package org.xlp.db.utils;
 
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.tableoption.annotation.XLPColumn;
 import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.tableoption.annotation.XLPId;
@@ -23,7 +24,7 @@ import org.xlp.javabean.processer.ValueProcesser;
  */
 public class BeanUtil {
 	// 日志记录
-	private final static Logger LOGGER = Logger.getLogger(BeanUtil.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(BeanUtil.class);
 
 	/**
 	 * 得到实体注解

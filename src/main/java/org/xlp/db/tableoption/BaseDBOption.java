@@ -6,7 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.tableoption.handlers.ResultSetHandle;
 import org.xlp.db.utils.XLPDBUtil;
 
@@ -23,7 +24,7 @@ import org.xlp.db.utils.XLPDBUtil;
  * 
  */
 public final class BaseDBOption extends AbstractDBOption {
-	private final static Logger LOGGER = Logger.getLogger(BaseDBOption.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(BaseDBOption.class);
 	private BaseDBOption() {
 		super();
 	}

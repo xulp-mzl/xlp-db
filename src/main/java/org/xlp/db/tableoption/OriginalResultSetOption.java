@@ -7,7 +7,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.utils.XLPDBUtil;
 
 /**
@@ -21,7 +22,7 @@ import org.xlp.db.utils.XLPDBUtil;
  * 
  */
 public class OriginalResultSetOption extends AbstractDBOption{
-	private final static Logger LOGGER = Logger.getLogger(BaseDBOption.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(BaseDBOption.class);
 	//连接
 	private Connection connection;
 	//预处理

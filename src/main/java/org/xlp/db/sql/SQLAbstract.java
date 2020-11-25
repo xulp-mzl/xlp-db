@@ -1,7 +1,8 @@
 package org.xlp.db.sql;
 
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.utils.BeanUtil;
 
@@ -18,7 +19,7 @@ import org.xlp.db.utils.BeanUtil;
  */
 public abstract class SQLAbstract implements SQL{
 	//日志记录
-	protected final static Logger LOGGER = Logger.getLogger(SQLAbstract.class);
+	protected final static Logger LOGGER = LoggerFactory.getLogger(SQLAbstract.class);
 	//bean类型
 	protected Class<?> beanClass;
 	

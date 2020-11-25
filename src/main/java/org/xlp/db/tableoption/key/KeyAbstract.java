@@ -4,7 +4,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.sql.SQLUtil;
 import org.xlp.db.tableoption.handlers.ScalarHandle;
@@ -25,7 +26,7 @@ import org.xlp.db.utils.Constants;
  */
 public abstract class KeyAbstract {
 	// 日志记录
-	protected final static Logger LOGGER = Logger.getLogger(KeyAbstract.class);
+	protected final static Logger LOGGER = LoggerFactory.getLogger(KeyAbstract.class);
 	// bean类型
 	protected Class<?> beanClass;
 	// 是否去数据库中获取当前可用值

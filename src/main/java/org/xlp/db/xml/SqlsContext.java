@@ -8,12 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.utils.io.XLPIOUtil;
 import org.xlp.utils.net.XLPHttpRequestUtil;
 import org.xml.sax.EntityResolver;
@@ -28,7 +29,7 @@ import org.xml.sax.SAXException;
  * @version 1.0	
  */
 public class SqlsContext {
-	private static final Logger LOGGER = Logger.getLogger(SqlsContext.class);
+	private static final Logger LOGGER  = LoggerFactory.getLogger(SqlsContext.class);
 	
 	//xml默认文件名放在src下
 	public static final String DEFAULT_FILE_NAME = "xlp_sql.xml";

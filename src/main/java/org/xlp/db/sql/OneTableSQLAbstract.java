@@ -3,7 +3,8 @@ package org.xlp.db.sql;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.tableoption.key.CompoundPrimaryKey;
 import org.xlp.db.utils.BeanUtil;
@@ -20,7 +21,7 @@ import org.xlp.db.utils.BeanUtil;
  */
 public abstract class OneTableSQLAbstract<T> implements SQL{
 	//日志记录
-	protected final static Logger LOGGER = Logger.getLogger(OneTableSQLAbstract.class);
+	protected final static Logger LOGGER = LoggerFactory.getLogger(OneTableSQLAbstract.class);
 	//bean类型
 	protected Class<T> beanClass;
 	//表名
