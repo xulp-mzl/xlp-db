@@ -59,6 +59,11 @@ public interface SQL {
 	public final static String LIKE = "like";
 	
 	/**
+	 * 字段类型为string时，如果没有最大长度的限制，默认为-1
+	 */
+	public final static int NO_STR_VALUE_MAX_LEN = -1; 
+	
+	/**
 	 * 得到不带预处理参数的SQL语句
 	 * 
 	 * @return

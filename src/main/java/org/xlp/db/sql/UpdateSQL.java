@@ -99,7 +99,9 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 					value = ((String)value).trim();
 				}
 				int maxLen = xlpColumn.maxLength();
-				value = XLPStringUtil.getSuitLenString((String)value, maxLen);
+				if (maxLen != NO_STR_VALUE_MAX_LEN) {
+					value = XLPStringUtil.getSuitLenString((String)value, maxLen);
+				}
 			}
 			updateValues.add(value);
 		}

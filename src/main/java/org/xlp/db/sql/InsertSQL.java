@@ -111,7 +111,9 @@ public class InsertSQL extends SQLAbstract {
 					value = ((String)value).trim();
 				}
 				int maxLen = xlpColumn.maxLength();
-				value = XLPStringUtil.getSuitLenString((String)value, maxLen);
+				if (maxLen != NO_STR_VALUE_MAX_LEN) {
+					value = XLPStringUtil.getSuitLenString((String)value, maxLen);
+				}
 			}
 			values.add(value);
 		}
