@@ -131,6 +131,7 @@ public final class CompoundPrimaryKey extends KeyAbstract{
 			count ++;
 			xlpId = pds[i].getFieldAnnotation(XLPId.class);
 			names[i] = xlpId.columnName();
+			names[i] = XLPStringUtil.isEmpty(names[i]) ? pds[i].getFieldName() : names[i];
 			try {
 				values[i] = pds[i].executeReadMethod(bean);
 			} catch (MethodException e) {

@@ -51,8 +51,8 @@ public final class BaseDBOption extends AbstractDBOption {
 	private int[] batch(Connection conn, boolean closeConn, String sql,
 			Object[][] params) throws SQLException {
 		paramsProcesser(conn, closeConn, sql, (Object[])params);
-		LOGGER.info("正在批量执行的sql语句是：" + sql);
-		LOGGER.info("对应的预处理参数是：" + Arrays.deepToString(params));
+		LOGGER.debug("正在批量执行的sql语句是：" + sql);
+		LOGGER.debug("对应的预处理参数是：" + Arrays.deepToString(params));
 		PreparedStatement ps = null;
 		int[] updateRows = null;
 		try{
@@ -124,9 +124,9 @@ public final class BaseDBOption extends AbstractDBOption {
     		LOGGER.error("查询结果处理器为空！");
 			throw new SQLException("查询结果处理器为空！");
 		}
-    	LOGGER.info("正在执行的查询sql语句是：" + sql);
+    	LOGGER.debug("正在执行的查询sql语句是：" + sql);
     	params = (params == null ? new Object[]{} : params);
-		LOGGER.info("对应的预处理参数是：" + Arrays.toString(params));
+		LOGGER.debug("对应的预处理参数是：" + Arrays.toString(params));
     	PreparedStatement ps = null;
     	ResultSet rs = null;
     	T result = null;
@@ -258,9 +258,9 @@ public final class BaseDBOption extends AbstractDBOption {
     private int update(Connection conn, boolean closeConn, String sql,
     		Object... params) throws SQLException {
     	nullProcesser(conn, closeConn, sql);
-    	LOGGER.info("正在执行的更新sql语句是：" + sql);
+    	LOGGER.debug("正在执行的更新sql语句是：" + sql);
     	params = (params == null ? new Object[]{} : params);
-		LOGGER.info("对应的预处理参数是：" + Arrays.toString(params));
+		LOGGER.debug("对应的预处理参数是：" + Arrays.toString(params));
     	int row = 0;
     	PreparedStatement ps = null;
     	try{

@@ -87,6 +87,7 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 		for (int i = 0; i < len; i++) {
 			xlpColumn = pds[i].getFieldAnnotation(XLPColumn.class);
 			String colName = xlpColumn.columnName();
+			colName = XLPStringUtil.isEmpty(colName) ? pds[i].getFieldName() : colName;
 			Object value = BeanUtil.callGetter(bean, pds[i]);
 			if((value == null || (pds[i].getFiledClassType().isPrimitive() &&
 					value.toString().equals("0"))) && !allUpdate)

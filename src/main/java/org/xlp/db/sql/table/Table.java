@@ -8,6 +8,7 @@ import org.xlp.db.tableoption.annotation.XLPColumn;
 import org.xlp.db.tableoption.annotation.XLPId;
 import org.xlp.javabean.JavaBeanPropertiesDescriptor;
 import org.xlp.javabean.PropertyDescriptor;
+import org.xlp.utils.XLPStringUtil;
 
 /**
  * 表对象信息
@@ -58,12 +59,14 @@ public class Table<T> {
 		for (i = 0; i < kLen; i++) {
 			allColumnNames[i] = kPds[i].getFieldAnnotation(XLPId.class)
 				.columnName();
+			allColumnNames[i] = XLPStringUtil.isEmpty(allColumnNames[i]) ? 
+					kPds[i].getFieldName() : allColumnNames[i];
 		}
 		
 		String colName = null;
 		for (int j = 0; j < len; j++, i++) {
-			colName = pds[j].getFieldAnnotation(XLPColumn.class)
-				.columnName();
+			colName = pds[j].getFieldAnnotation(XLPColumn.class).columnName();
+			colName = XLPStringUtil.isEmpty(colName) ? pds[i].getFieldName() : colName;
 			allColumnNames[i] = colName; //初始化表所有所有字段数组（主键字段在最前）
 			columnNames[j] = colName; //表所有所有字段数组除key对应字段外
 		}

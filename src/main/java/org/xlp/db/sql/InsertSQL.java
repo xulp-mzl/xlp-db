@@ -98,9 +98,12 @@ public class InsertSQL extends SQLAbstract {
 		}
 		XLPColumn xlpColumn;
 		Class<?> filedTypeClass;
+		String columnName;
 		for (int j = 0; j < len; j++) {
 			xlpColumn = pds[j].getFieldAnnotation(XLPColumn.class);
-			columnNames.add(xlpColumn.columnName());
+			columnName = xlpColumn.columnName();
+			columnName = XLPStringUtil.isEmpty(columnName) ? pds[j].getFieldName() : columnName;
+			columnNames.add(columnName);
 			filedTypeClass = pds[j].getFiledClassType();
 			Object value = getValue(pds[j], bean);
 			if(String.class.equals(filedTypeClass) && value != null){

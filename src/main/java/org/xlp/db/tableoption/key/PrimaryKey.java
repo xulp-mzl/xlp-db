@@ -97,6 +97,7 @@ import org.xlp.utils.XLPStringUtil;
 		if (pd != null) {
 			XLPId xlpId = pd.getFieldAnnotation(XLPId.class);
 			name = xlpId.columnName();
+			name = XLPStringUtil.isEmpty(name) ? pd.getFieldName() : name;
 			try {
 				value = pd.executeReadMethod(bean);
 			} catch (Exception e) {
