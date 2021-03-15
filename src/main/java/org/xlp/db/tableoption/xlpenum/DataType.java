@@ -1,4 +1,6 @@
 package org.xlp.db.tableoption.xlpenum;
+import org.xlp.utils.XLPStringUtil;
+
 /**
  * <p>创建时间：2021年3月14日 下午10:48:06</p>
  * @author xlp
@@ -25,9 +27,9 @@ public enum DataType {
 	TIME("time"),
 	TIMESTAMP("timestamp"),
 	BOOLEAN("boolean"),
-	BOOL("bool"),
 	VARCHAR("varchar"),
-	TINYINT("tinyint")
+	TINYINT("tinyint"),
+	NONE(XLPStringUtil.EMPTY)
 	;
 	private String dataTypeName;
 	

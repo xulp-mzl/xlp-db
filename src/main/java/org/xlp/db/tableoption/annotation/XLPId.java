@@ -47,7 +47,7 @@ public @interface XLPId {
 	/**
 	 * 数据类型
 	 */
-	public DataType dataType();
+	public DataType dataType() default DataType.NONE;
 	
 	/**
 	 * 是否可为空值，默认可以 
