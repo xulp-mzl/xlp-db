@@ -6,7 +6,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.xlp.db.tableoption.xlpenum.DataType;
 import org.xlp.db.tableoption.xlpenum.PrimaryKeyType;
+import org.xlp.utils.XLPStringUtil;
 
 /**
  * 用来判断是否数据库表中的主键的字段
@@ -26,4 +28,34 @@ public @interface XLPId {
 	public String columnName() default "";//主键对应的列名称
 	public PrimaryKeyType type() default PrimaryKeyType.AUTO;//默认主键值为自增长
 	public String descriptor() default "";//描述
+	
+	/**
+	 * 字段长度
+	 */
+	public int length() default -1;
+	
+	/**
+	 * 小数部分长度
+	 */
+	public int decimalLength() default 0;
+	
+	/**
+	 * 默认字符串值
+	 */
+	public String defaultValue() default XLPStringUtil.NULL_STRING;
+	
+	/**
+	 * 数据类型
+	 */
+	public DataType dataType();
+	
+	/**
+	 * 是否可为空值，默认可以 
+	 */
+	public boolean isNull() default true;
+	
+	/**
+	 * 默认值是否用0填充
+	 */
+	public boolean zeroFill() default false;
 }
