@@ -29,7 +29,7 @@ public enum DataType {
 	BOOLEAN("boolean"),
 	VARCHAR("varchar"),
 	TINYINT("tinyint"),
-	NONE(XLPStringUtil.EMPTY)
+	NONE(XLPStringUtil.EMPTY) 
 	;
 	private String dataTypeName;
 	
