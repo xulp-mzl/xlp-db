@@ -1,5 +1,4 @@
 package org.xlp.db.tableoption.xlpenum;
-
 import org.xlp.utils.XLPStringUtil;
 
 /**
