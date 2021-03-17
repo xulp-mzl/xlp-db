@@ -29,6 +29,7 @@ public @interface XLPId {
 	public PrimaryKeyType type() default PrimaryKeyType.AUTO;//默认主键值为自增长
 	public String descriptor() default "";//描述
 	
+	//以下字段用来根据实体类创建相应的表
 	/**
 	 * 字段长度
 	 */

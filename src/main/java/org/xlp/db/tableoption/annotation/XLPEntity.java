@@ -6,6 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.xlp.db.tableoption.xlpenum.DBEngine;
+
 /**
  * 用来判断是否是实体，以及对应的数据库中标的名字
  * 
@@ -22,4 +24,15 @@ import java.lang.annotation.Target;
 public @interface XLPEntity {
 	public String tableName();//数据库中标的名字
 	public String descriptor() default "";//描述
+	
+	//以下字段用来根据实体类创建相应的表
+	/**
+	 * 字符编码
+	 */
+	public String chartsetName() default "utf8mb4";
+	
+	/**
+	 * db引擎类型
+	 */
+	public DBEngine dbEngine() default DBEngine.INNODB;
 }
