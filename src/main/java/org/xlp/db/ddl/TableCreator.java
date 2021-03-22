@@ -311,6 +311,7 @@ public class TableCreator {
 		XLPId xlpId;
 		String columnName;
 		String columnSql;
+		boolean isFirstColumn = true;
 		for (PropertyDescriptor<?> propertyDescriptor : columns) {
 			xlpColumn = propertyDescriptor.getFieldAnnotation(XLPColumn.class);
 			if (xlpColumn == null) {
@@ -337,7 +338,10 @@ public class TableCreator {
 				continue;
 
 			// 拼接每列sql
-			tableSql.append(",\n").append(columnSql);
+			if (!isFirstColumn) {
+				tableSql.append(",");
+			}
+			tableSql.append("\n").append(columnSql);
 		}
 
 		if (!primaryKeys.isEmpty()) {
