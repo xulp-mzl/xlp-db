@@ -225,6 +225,10 @@ public class TableCreator {
 				}
 			}
 		}
+		
+		if (isInfo) {
+			LOGGER.info("创建数据表完成。。。。");
+		}
 	}
 
 	/**
@@ -342,6 +346,7 @@ public class TableCreator {
 				tableSql.append(",");
 			}
 			tableSql.append("\n").append(columnSql);
+			isFirstColumn = false;
 		}
 
 		if (!primaryKeys.isEmpty()) {
