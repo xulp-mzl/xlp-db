@@ -29,6 +29,12 @@
 			<artifactId>xlp-core</artifactId>
 			<version>${xlp.jar.versionNo}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.xlp</groupId>
+			<artifactId>xlp-scanner</artifactId>
+			<version>${xlp.jar.versionNo}</version>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/cglib/cglib -->
 		<dependency>
 			<groupId>cglib</groupId>

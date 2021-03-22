@@ -30,6 +30,9 @@ public enum DataType {
 	BOOL("bool"),
 	VARCHAR("varchar"),
 	TINYINT("tinyint"),
+	NUMERIC("numeric"),
+	TINYBLOB("tinyblob"),
+	TINYTEXT("tinytext"),
 	NONE(XLPStringUtil.EMPTY)
 	;
 	private String dataTypeName;
