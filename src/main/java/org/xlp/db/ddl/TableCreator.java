@@ -16,6 +16,7 @@ import org.xlp.db.tableoption.annotation.XLPColumn;
 import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.tableoption.annotation.XLPId;
 import org.xlp.db.tableoption.xlpenum.DataType;
+import org.xlp.db.tableoption.xlpenum.TableType;
 import org.xlp.db.utils.XLPDBUtil;
 import org.xlp.javabean.JavaBeanPropertiesDescriptor;
 import org.xlp.javabean.PropertyDescriptor;
@@ -263,21 +264,23 @@ public class TableCreator {
 			throw new TableCreateException("给定的对象不是实体类，缺失【XLPEntity】注解！");
 		}
 		String createTableSql = createTableSql(entityClass);
-		Statement statement = null;
-		try {
-			statement = connection.createStatement();
-			if (LOGGER.isDebugEnabled()) {
-				LOGGER.debug("正在创建【\n" + createTableSql + "\n】的数据库表。。。");
-			}
-			statement.execute(createTableSql);
-		} catch (SQLException e) {
-			throw new TableCreateException("创建statement失败，或创建数据库表【\n" + createTableSql + "\n】失败", e);
-		} finally {
+		if (!XLPStringUtil.isEmpty(createTableSql)) {
+			Statement statement = null;
 			try {
-				XLPDBUtil.closeStatement(statement);
+				statement = connection.createStatement();
+				if (LOGGER.isDebugEnabled()) {
+					LOGGER.debug("正在创建【\n" + createTableSql + "\n】的数据库表。。。");
+				}
+				statement.execute(createTableSql);
 			} catch (SQLException e) {
-				if (LOGGER.isErrorEnabled()) {
-					LOGGER.error("关闭statement失败！");
+				throw new TableCreateException("创建statement失败，或创建数据库表【\n" + createTableSql + "\n】失败", e);
+			} finally {
+				try {
+					XLPDBUtil.closeStatement(statement);
+				} catch (SQLException e) {
+					if (LOGGER.isErrorEnabled()) {
+						LOGGER.error("关闭statement失败！");
+					}
 				}
 			}
 		}
@@ -294,11 +297,20 @@ public class TableCreator {
 		if (entityClass == null) {
 			return XLPStringUtil.EMPTY;
 		}
+		
 		StringBuilder tableSql = new StringBuilder();
 		XLPEntity xlpEntity = entityClass.getAnnotation(XLPEntity.class);
 		if (xlpEntity == null) {
 			return XLPStringUtil.EMPTY;
 		}
+		
+		if (xlpEntity.tableType() != TableType.TABLE) {
+			if (LOGGER.isInfoEnabled()) {
+				LOGGER.info("该实体" + entityClass.getName() + "为视图，无需创建表！"); 
+			}
+			return XLPStringUtil.EMPTY;
+		}
+		
 		String tableName = xlpEntity.tableName();
 
 		// 形成table部分sql

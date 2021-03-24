@@ -7,6 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.xlp.db.tableoption.xlpenum.DBEngine;
+import org.xlp.db.tableoption.xlpenum.TableType;
 
 /**
  * 用来判断是否是实体，以及对应的数据库中标的名字
@@ -35,4 +36,9 @@ public @interface XLPEntity {
 	 * db引擎类型
 	 */
 	public DBEngine dbEngine() default DBEngine.INNODB;
+	
+	/**
+	 * 视图类型，默认为数据表实体
+	 */
+	public TableType tableType() default TableType.TABLE;
 }
