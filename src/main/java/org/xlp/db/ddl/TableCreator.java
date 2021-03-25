@@ -218,6 +218,9 @@ public class TableCreator {
 				} else {
 					statement.execute(createTableSql);
 				}
+				if (isDebug) {
+					LOGGER.debug("创建【\n" + createTableSql + "\n】的数据库表已完成");
+				}
 			}
 		} catch (SQLException e) {
 			throw new TableCreateException("创建statement失败，或创建数据库表【\n" + createTableSql + "\n】失败", e);
@@ -563,8 +566,9 @@ public class TableCreator {
 			sb.append(dataType.getDataTypeName());
 			// 判断是否定义了字段长度
 			if (len != NOT_DEFINE_LEN) {
-				sb.append("(").append(len).append(") ");
+				sb.append("(").append(len).append(")");
 			}
+			sb.append(" ");
 			break;
 		}
 	}
