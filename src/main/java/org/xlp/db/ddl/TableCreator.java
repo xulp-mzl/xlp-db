@@ -5,13 +5,17 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xlp.assertion.AssertUtils;
+import org.xlp.db.ddl.annotation.XLPIndex;
 import org.xlp.db.tableoption.annotation.XLPColumn;
 import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.tableoption.annotation.XLPId;
@@ -226,7 +230,7 @@ public class TableCreator {
 				}
 			}
 		}
-		
+
 		if (isInfo) {
 			LOGGER.info("创建数据表完成。。。。");
 		}
@@ -297,20 +301,20 @@ public class TableCreator {
 		if (entityClass == null) {
 			return XLPStringUtil.EMPTY;
 		}
-		
+
 		StringBuilder tableSql = new StringBuilder();
 		XLPEntity xlpEntity = entityClass.getAnnotation(XLPEntity.class);
 		if (xlpEntity == null) {
 			return XLPStringUtil.EMPTY;
 		}
-		
+
 		if (xlpEntity.tableType() != TableType.TABLE) {
 			if (LOGGER.isInfoEnabled()) {
-				LOGGER.info("该实体" + entityClass.getName() + "为视图，无需创建表！"); 
+				LOGGER.info("该实体" + entityClass.getName() + "为视图，无需创建表！");
 			}
 			return XLPStringUtil.EMPTY;
 		}
-		
+
 		String tableName = xlpEntity.tableName();
 
 		// 形成table部分sql
@@ -325,9 +329,13 @@ public class TableCreator {
 		// 处理成数据库表相应的字段
 		XLPColumn xlpColumn;
 		XLPId xlpId;
-		String columnName;
+		String columnName = null;
 		String columnSql;
 		boolean isFirstColumn = true;
+
+		// 存储索引列，key：列名， value：XLPIndex
+		Map<String, XLPIndex> indexMap = new HashMap<String, XLPIndex>();
+
 		for (PropertyDescriptor<?> propertyDescriptor : columns) {
 			xlpColumn = propertyDescriptor.getFieldAnnotation(XLPColumn.class);
 			if (xlpColumn == null) {
@@ -350,7 +358,7 @@ public class TableCreator {
 				columnSql = createColumnSql(xlpColumn, columnName);
 			}
 
-			if (columnSql.isEmpty())
+			if (XLPStringUtil.isEmpty(columnSql))
 				continue;
 
 			// 拼接每列sql
@@ -359,6 +367,12 @@ public class TableCreator {
 			}
 			tableSql.append("\n").append(columnSql);
 			isFirstColumn = false;
+
+			// 处理索引列
+			XLPIndex index = propertyDescriptor.getFieldAnnotation(XLPIndex.class);
+			if (index != null) {
+				indexMap.put(columnName, index);
+			}
 		}
 
 		if (!primaryKeys.isEmpty()) {
@@ -366,6 +380,11 @@ public class TableCreator {
 					.append(XLPCollectionUtil.toString(primaryKeys, XLPStringUtil.EMPTY, ",", XLPStringUtil.EMPTY))
 					.append(")");
 		}
+
+		for (Entry<String, XLPIndex> entry : indexMap.entrySet()) {
+			tableSql.append(",\n").append(createIndexSql(entry.getKey(), entry.getValue()));
+		}
+
 		tableSql.append("\n)ENGINE=").append(xlpEntity.dbEngine().getDbEngineName()).append(" CHARSET=")
 				.append(xlpEntity.chartsetName());
 		String tableComment = xlpEntity.descriptor();
@@ -375,6 +394,38 @@ public class TableCreator {
 					.append(transferredChar(tableComment)).append("'");
 		}
 		return tableSql.toString();
+	}
+
+	/**
+	 * 创建索引列sql
+	 * 
+	 * @param columnName
+	 *            数据表列名称(已被处理过， 无需在处理)
+	 * @param xlpIndex
+	 * @return
+	 */
+	private String createIndexSql(String columnName, XLPIndex xlpIndex) {
+		StringBuilder sb = new StringBuilder();
+		switch (xlpIndex.indexType()) {
+		case FULLTEXT:
+			sb.append("FULLTEXT INDEX ");
+			break;
+		case NORMAL:
+			sb.append("INDEX ");		
+			break;
+		case UNIQUE:
+			sb.append("UNIQUE INDEX ");
+			break;
+		default:
+			break;
+		}
+		//索引名称
+		String name = xlpIndex.name();
+		if (!XLPStringUtil.isEmpty(name)) { 
+			sb.append(wrap(name)).append(" ");
+		}
+		sb.append("(").append(columnName).append(")");
+		return sb.toString();
 	}
 
 	/**
