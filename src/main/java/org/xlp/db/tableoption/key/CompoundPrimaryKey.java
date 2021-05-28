@@ -7,6 +7,7 @@ import org.xlp.db.tableoption.xlpenum.PrimaryKeyType;
 import org.xlp.javabean.JavaBeanPropertiesDescriptor;
 import org.xlp.javabean.MethodException;
 import org.xlp.javabean.PropertyDescriptor;
+import org.xlp.utils.XLPOutputInfoUtil;
 import org.xlp.utils.XLPStringUtil;
 
 /**
@@ -136,7 +137,7 @@ public final class CompoundPrimaryKey extends KeyAbstract{
 				values[i] = pds[i].executeReadMethod(bean);
 			} catch (MethodException e) {
 				LOGGER.warn("读取主键值时产生异常，对应的字段名：" + pds[i].getFieldName());
-				e.printStackTrace();
+				XLPOutputInfoUtil.println(e);
 			}
 			types[i] = xlpId.type();
 			isPrimitives[i] = pds[i].getFiledClassType().isPrimitive();

@@ -2,6 +2,7 @@ package org.xlp.db.sql;
 
 import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.utils.BeanUtil;
+import org.xlp.utils.XLPOutputInfoUtil;
 import org.xlp.utils.XLPStringUtil;
 
 /**
@@ -78,7 +79,7 @@ public final class SQLUtil {
 		String sqlString = sql.toString();
 		for (int i = 0, len = values.length; i < len; i++) {
 			int index = XLPStringUtil.getCharacterPosition(sqlString, SQL.INTERROGATION, 1);
-			System.out.println("******index=" + index + "*******i=" + i);
+			XLPOutputInfoUtil.println("******index=" + index + "*******i=" + i);
 			if(values[i] != null){
 				if(values[i] instanceof CharSequence || values[i] instanceof Character)
 					sql.replace(index, index + 1, SQL.SINGLE_QUOTE + values[i] + SQL.SINGLE_QUOTE);

@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xlp.utils.XLPOutputInfoUtil;
 import org.xlp.utils.io.XLPIOUtil;
 import org.xlp.utils.net.XLPHttpRequestUtil;
 import org.xml.sax.EntityResolver;
@@ -183,7 +184,7 @@ public class SqlsContext {
 	private static void getSqlsEle(Element rootElement) {
 		// 获取特定名称的子元素集合（sqls）
 		List<Element> sqlsElements = rootElement.elements("sqls");
-		//System.out.println(sqlsElements);
+		//XLPOutputInfoUtil.println(sqlsElements);
 		//属性id值
 		String attrIdV = null;
 		for (Element element : sqlsElements) {

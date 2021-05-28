@@ -7,6 +7,8 @@ import java.sql.Statement;
 
 import javax.sql.DataSource;
 
+import org.xlp.utils.XLPOutputInfoUtil;
+
 /**
  * jdbcUtil类
  * 
@@ -307,7 +309,7 @@ public final class XLPDBUtil {
 					.getDatabaseProductName();
 			return driverName;
 		} catch (SQLException e) {
-			e.printStackTrace();
+			XLPOutputInfoUtil.println(e);
 		}finally{
 			closeWithNoException(connection);
 		}
