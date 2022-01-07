@@ -71,7 +71,7 @@ public class DBMapBeanConverter<T> extends MapBeanAbstract<T> {
 	}
 
 	@Override
-	protected String virtualReadFieldName(PropertyDescriptor<T> pd) {
+	protected String virtualReadFieldName(PropertyDescriptor<?> pd) {
 		String virtualFieldName = null;
 		XLPColumn xlpColumn = pd.getFieldAnnotation(XLPColumn.class);
 		XLPId xlpId;
@@ -90,7 +90,12 @@ public class DBMapBeanConverter<T> extends MapBeanAbstract<T> {
 	}
 
 	@Override
-	protected String virtualWriteFieldName(PropertyDescriptor<T> pd) {
+	protected String virtualWriteFieldName(PropertyDescriptor<?> pd) {
 		return virtualReadFieldName(pd);
+	}
+
+	@Override
+	protected boolean canUseBeanAnnotation() {
+		return true;
 	}
 }
