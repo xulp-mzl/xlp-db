@@ -1,6 +1,6 @@
 package org.xlp.db.exception;
 
-public class EntityException extends Exception{
+public class EntityException extends RuntimeException{
 	private static final long serialVersionUID = 9199905669447415856L;
 
 	public EntityException() {
@@ -18,6 +18,4 @@ public class EntityException extends Exception{
 	public EntityException(String message) {
 		super(message);
 	}
-
-	
 }

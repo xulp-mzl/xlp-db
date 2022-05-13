@@ -1,6 +1,5 @@
 package org.xlp.mv;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -8,18 +7,16 @@ import java.util.Set;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.page.Page;
 import org.xlp.db.sql.SQL;
-import org.xlp.db.sql.limit.Limit;
 import org.xlp.db.tableoption.handlers.result.DataSet;
-import org.xlp.utils.XLPArrayUtil;
 
 /**
  * 
  * @author 徐龙平
  * 
+ *         数据库操作基础类，该类可以完成大部分操作
+ * 
  */
-public class BaseService implements IBaseService{
-	protected final static BaseDao BASEDAO = new BaseDao();
-
+public interface IBaseDao {
 	/**
 	 * 向数据库中插入一条数据
 	 * <p>
@@ -27,44 +24,23 @@ public class BaseService implements IBaseService{
 	 * 
 	 * @param bean
 	 * @return 主键值，假如返回null时，可能数据保存失败，也可能指定的bean对象没有主键属性。 假如复合主键时，返回他们组成的数组
-	 * @throws EntityException OptionDBException 
+	 * @throws EntityException OptionDBException  
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Object save(T bean){
-		return BASEDAO.save(bean);
-	}
+	public <T> Object save(T bean);
 
 	/**
 	 * 向数据库中插入多条数据
 	 * <p>
 	 * 假如给定要存储的对象是实体，并有相关的主键，并主键值未指定，那么此函数会自动生成一个可用的主键值
 	 * 
-	 * @param beanList
+	 * @param bean
 	 *            数据集合
 	 * @return 假如参数为null或保存失败，返回false，否则返回true
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> boolean save(List<T> beanList){
-		return BASEDAO.save(beanList);
-	}
-
-	/**
-	 * 向数据库中插入多条数据
-	 * <p>
-	 * 假如给定要存储的对象是实体，并有相关的主键，并主键值未指定，那么此函数会自动生成一个可用的主键值
-	 * 
-	 * @param beanArray
-	 *            数据数组
-	 * @return 假如参数为null或保存失败，返回false，否则返回true
-	 * @throws EntityException OptionDBException 
-	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
-	 */
-	public <T> boolean save(T[] beanArray){
-		if (XLPArrayUtil.isEmpty(beanArray))
-			return false;
-		return BASEDAO.save(Arrays.asList(beanArray));
-	}
+	public <T> boolean save(List<T> bean);
 
 	/**
 	 * 通过SQL对象向数据库中插入一条数据
@@ -77,9 +53,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public int save(SQL sqlObj){
-		return BASEDAO.save(sqlObj);
-	}
+	public int save(SQL sqlObj);
 
 	/**
 	 * 得到单表数据的条数
@@ -89,9 +63,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> long count(Class<T> beanClass){
-		return BASEDAO.count(beanClass);
-	}
+	public <T> long count(Class<T> beanClass);
 
 	/**
 	 * 得数据的条数
@@ -103,9 +75,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public long count(SQL sqlObj){
-		return BASEDAO.count(sqlObj);
-	}
+	public long count(SQL sqlObj);
 
 	/**
 	 * 通过SQL对象得到javabean对象
@@ -117,9 +87,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> T find(SQL sqlObj){
-		return BASEDAO.find(sqlObj);
-	}
+	public <T> T find(SQL sqlObj);
 
 	/**
 	 * 通过 实体对象得到javabean对象
@@ -130,9 +98,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> T find(T bean){
-		return BASEDAO.find(bean);
-	}
+	public <T> T find(T bean);
 
 	/**
 	 * 通过主键查找数据
@@ -145,9 +111,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象类型对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> T find(Class<T> beanClass, Object keyValue){
-		return BASEDAO.find(beanClass, keyValue);
-	}
+	public <T> T find(Class<T> beanClass, Object keyValue);
 
 	/**
 	 * 通过主键查找数据
@@ -160,9 +124,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> T find(Class<T> beanClass, Object... keyValues){
-		return BASEDAO.find(beanClass, keyValues);
-	}
+	public <T> T find(Class<T> beanClass, Object... keyValues);
 
 	/**
 	 * 通过单表得到javabean list集合
@@ -173,9 +135,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> List<T> list(Class<T> beanClass){
-		return BASEDAO.list(beanClass);
-	}
+	public <T> List<T> list(Class<T> beanClass);
 
 	/**
 	 * 通过SQL对象得到javabean list集合
@@ -187,10 +147,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> List<T> list(SQL sqlObj){
-		return BASEDAO.list(sqlObj);
-	}
-
+	public <T> List<T> list(SQL sqlObj);
 	/**
 	 * 通过单表得到javabean set集合
 	 * 
@@ -199,9 +156,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Set<T> set(Class<T> beanClass){
-		return BASEDAO.set(beanClass);
-	}
+	public <T> Set<T> set(Class<T> beanClass);
 
 	/**
 	 * 通过SQL对象得到javabean set集合
@@ -213,10 +168,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> Set<T> set(SQL sqlObj){
-		return BASEDAO.set(sqlObj);
-	}
-
+	public <T> Set<T> set(SQL sqlObj);
 	/**
 	 * 删除指定bean类型对应的表中的所有数据
 	 * 
@@ -227,9 +179,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> boolean delete(Class<T> beanClass){
-		return BASEDAO.delete(beanClass);
-	}
+	public <T> boolean delete(Class<T> beanClass);
 
 	/**
 	 * 删除指定bean对应的表中的数据
@@ -241,9 +191,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> boolean delete(T bean){
-		return BASEDAO.delete(bean);
-	}
+	public <T> boolean delete(T bean);
 
 	/**
 	 * 根据SQL对象删除数
@@ -255,9 +203,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public boolean update(SQL sql){
-		return BASEDAO.update(sql);
-	}
+	public boolean update(SQL sql);
 
 	/**
 	 * 通过主键删除数据
@@ -270,10 +216,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> boolean delete(Class<T> beanClass, Object keyValue){
-		return BASEDAO.delete(beanClass, keyValue);
-	}
-
+	public <T> boolean delete(Class<T> beanClass, Object keyValue);
 	/**
 	 * 通过主键删除数据(复合主键)
 	 * 
@@ -285,9 +228,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> boolean delete(Class<T> beanClass, Object... keyValues){
-		return BASEDAO.delete(beanClass, keyValues);
-	}
+	public <T> boolean delete(Class<T> beanClass, Object... keyValues);
 
 	/**
 	 * 更新，指定的bean一定要主键属性
@@ -297,9 +238,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> boolean update(T bean){
-		return BASEDAO.update(bean);
-	}
+	public <T> boolean update(T bean);
 
 	/**
 	 * 通过bean对象获取新的bean对象
@@ -313,9 +252,7 @@ public class BaseService implements IBaseService{
 	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> T findE(T bean){
-		return BASEDAO.findE(bean);
-	}
+	public <T> T findE(T bean);
 
 	/**
 	 * 通过SQL对象获取dataset对象
@@ -327,10 +264,8 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public DataSet findDataSet(SQL sql){
-		return BASEDAO.findDataSet(sql);
-	}
-
+	public DataSet findDataSet(SQL sql);
+	
 	/**
 	 * 把数据处理成数组
 	 * 
@@ -341,9 +276,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Object[] array(SQL sql){
-		return BASEDAO.array(sql);
-	}
+	public Object[] array(SQL sql);
 
 	/**
 	 * 把数据处理成List<Object[]>集合
@@ -355,9 +288,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public List<Object[]> listArray(SQL sql){
-		return BASEDAO.listArray(sql);
-	}
+	public List<Object[]> listArray(SQL sql);
 
 	/**
 	 * 把数据处理成Map<String, Object>集合
@@ -369,9 +300,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Map<String, Object> map(SQL sql){
-		return BASEDAO.map(sql);
-	}
+	public Map<String, Object> map(SQL sql);
 
 	/**
 	 * 把数据处理成List<Map<String, Object>>集合
@@ -383,9 +312,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public List<Map<String, Object>> listMap(SQL sql){
-		return BASEDAO.listMap(sql);
-	}
+	public List<Map<String, Object>> listMap(SQL sql);
 
 	/**
 	 * 分页查询，暂时只对mysql有效
@@ -400,59 +327,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> Page<T> searchPage(SQL sql, Page<T> page){
-		return BASEDAO.searchPage(sql, page);
-	}
-
-	/**
-	 * 分页查询，暂时只对mysql有效
-	 * 
-	 * @param sql
-	 *            SQL对象， 该对象中应不包含limit条件，否则可能抛出异常
-	 * @return 返回默认分页的首页对象
-	 * @throws EntityException OptionDBException 
-	 *             假如数据库访问出错时，抛出该异常
-	 * @throws NullPointerException
-	 *             假如参数为null，抛出该异常
-	 */
-	public <T> Page<T> searchPage(SQL sql){
-		return this.searchPage(sql, new Page<T>());
-	}
-
-	/**
-	 * 分页查询，暂时只对mysql有效
-	 * 
-	 * @param sql
-	 *            SQL对象， 该对象中应不包含limit条件，否则可能抛出异常
-	 * @param limit
-	 *            <code>Limit</code>对象
-	 * @return 返回默认分页对象
-	 * @throws EntityException OptionDBException  
-	 * @throws <code>EntityException</code> 假如数据库访问出错时，抛出该异常
-	 * @throws <code>NullPointerException</code> 假如参数为null，抛出该异常
-	 */
-	public <T> Page<T> searchPage(SQL sql, Limit limit) {
-		return this.searchPage(sql, new Page<T>((int) limit.getStartPos() + 1,
-				(int) limit.getResultCount()));
-	}
-
-	/**
-	 * 分页查询，暂时只对mysql有效
-	 * 
-	 * @param sql
-	 *            SQL对象， 该对象中应不包含limit条件，否则可能抛出异常
-	 * @param start
-	 *            分页开始号码，从1开始
-	 * @param size
-	 *            分页大小
-	 * @return 返回默认分页对象
-	 * @throws EntityException OptionDBException 
-	 * @throws <code>NullPointerException</code> 假如参数为null，抛出该异常
-	 */
-	public <T> Page<T> searchPage(SQL sql, int start, int size){
-		return this.searchPage(sql, new Page<T>(start, size));
-	}
-	
+	public <T> Page<T> searchPage(SQL sql, Page<T> page);
 	/**
 	 * 得到单表数据的指定字段的最大值
 	 * 
@@ -460,24 +335,22 @@ public class BaseService implements IBaseService{
 	 * @param maxFieldName
 	 *            要求最大值字段名称对应的bean的属性名称
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException OptionDBException  
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Double max(Class<T> beanClass, String maxFieldName){
-		return BASEDAO.max(beanClass, maxFieldName);
-	}
+	public <T> Double max(Class<T> beanClass, String maxFieldName);
 
 	/**
 	 * 得到单表数据的最大值
 	 * 
 	 * @param sqlObj
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException OptionDBException  
+	 * @throws EntityException OptionDBException 
+	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Double max(SQL sqlObj){
-		return BASEDAO.max(sqlObj);
-	}
+	public Double max(SQL sqlObj);
 
 	/**
 	 * 得到单表数据的指定字段的最小值
@@ -486,24 +359,22 @@ public class BaseService implements IBaseService{
 	 * @param minFieldName
 	 *            要求最小值字段名称对应的bean的属性名称
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException OptionDBException  
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Double min(Class<T> beanClass, String minFieldName){
-		return BASEDAO.min(beanClass, minFieldName);
-	}
+	public <T> Double min(Class<T> beanClass, String minFieldName);
 
 	/**
 	 * 得到单表数据的最小值
 	 * 
 	 * @param sqlObj
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException OptionDBException  
+	 * @throws EntityException OptionDBException 
+	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Double min(SQL sqlObj){
-		return BASEDAO.min(sqlObj);
-	}
+	public Double min(SQL sqlObj);
 
 	/**
 	 * 得到单表数据的指定字段的平均值
@@ -512,11 +383,10 @@ public class BaseService implements IBaseService{
 	 * @param avgFieldName
 	 *            要求平均值字段名称对应的bean的属性名称
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException OptionDBException  
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Double avg(Class<T> beanClass, String avgFieldName){
-		return BASEDAO.avg(beanClass, avgFieldName);
-	}
+	public <T> Double avg(Class<T> beanClass, String avgFieldName);
 
 	/**
 	 * 得到单表数据的平均值
@@ -528,9 +398,7 @@ public class BaseService implements IBaseService{
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Double avg(SQL sqlObj){
-		return BASEDAO.avg(sqlObj);
-	}
+	public Double avg(SQL sqlObj);
 
 	/**
 	 * 得到单表数据的指定字段的和
@@ -539,22 +407,20 @@ public class BaseService implements IBaseService{
 	 * @param sumFieldName
 	 *            要求和段名称对应的bean的属性名称
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException OptionDBException  
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Double sum(Class<T> beanClass, String sumFieldName){
-		return BASEDAO.sum(beanClass, sumFieldName);
-	}
+	public <T> Double sum(Class<T> beanClass, String sumFieldName);
 
 	/**
 	 * 得到单表数据的和
 	 * 
 	 * @param sqlObj
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException OptionDBException  
+	 * @throws EntityException OptionDBException 
+	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Double sum(SQL sqlObj){
-		return BASEDAO.sum(sqlObj);
-	}
+	public Double sum(SQL sqlObj);
 }

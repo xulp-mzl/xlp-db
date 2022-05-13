@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.xlp.db.utils.Constants;
+import org.xlp.javabean.annotation.Bean;
+import org.xlp.javabean.annotation.FieldName;
 import org.xlp.utils.collection.XLPCollectionUtil;
 
 /**
@@ -13,26 +15,37 @@ import org.xlp.utils.collection.XLPCollectionUtil;
  * @version 1.0
  * 
  */
+@Bean
 public class Page<T> {
 	//每页的数据信息集合
+	@FieldName
 	private List<T> datas;
 	//当前页面号
+	@FieldName
 	private int currentNo = 1;
 	//每页数据现显示的条数
+	@FieldName
 	private int pageSize = Constants.DEFAULT_PAGE_SIZE;
 	//数据总条数
+	@FieldName
 	private long totalCount = 0;
 	//当前页面实际显示的数据条数
+	@FieldName
 	private int currentCount = 0;
 	//总页数
+	@FieldName
 	private int totalPage = 1;
 	//页码显示数量
+	@FieldName
 	private int pageCodeNo = Constants.DEFAULT_PAGE_CODE_NUM;
 	//是否有前一页
+	@FieldName
 	private boolean hasPrev;	
 	//是否有下一页
+	@FieldName
 	private boolean hasNext;
 	//翻页行可以出现的连续的页码集合默认5个
+	@FieldName
 	private List<Integer> clickPageNo;
 	
 	public Page(){

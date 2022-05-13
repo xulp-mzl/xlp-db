@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.xlp.db.exception.EntityException;
 import org.xlp.db.page.Page;
 import org.xlp.db.sql.SQL;
 import org.xlp.db.tableoption.handlers.result.DataSet;
@@ -18,7 +17,7 @@ import org.xlp.db.tableoption.simple.DBSession;
  *         数据库操作基础类，该类可以完成大部分操作
  * 
  */
-public class BaseDao {
+public class BaseDao implements IBaseDao{
 	protected final static DBSession SESSION = DBSession.newInstance();
 
 	/**
@@ -28,14 +27,14 @@ public class BaseDao {
 	 * 
 	 * @param bean
 	 * @return 主键值，假如返回null时，可能数据保存失败，也可能指定的bean对象没有主键属性。 假如复合主键时，返回他们组成的数组
-	 * @throws EntityException 
+	 * @throws EntityException OptionDBException  
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Object save(T bean) throws EntityException {
+	public <T> Object save(T bean){
 		try {
 			return SESSION.save(bean);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -47,15 +46,15 @@ public class BaseDao {
 	 * @param bean
 	 *            数据集合
 	 * @return 假如参数为null或保存失败，返回false，否则返回true
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> boolean save(List<T> bean) throws EntityException {
+	public <T> boolean save(List<T> bean){
 		try {
 			int[] changed = SESSION.batchSave(bean);
 			return changed.length > 0;
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -65,16 +64,16 @@ public class BaseDao {
 	 * @param sqlObj
 	 *            SQL对象
 	 * @return 受影响数据的条数
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public int save(SQL sqlObj) throws EntityException {
+	public int save(SQL sqlObj){
 		try {
 			return SESSION.save(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -83,14 +82,14 @@ public class BaseDao {
 	 * 
 	 * @param beanClass
 	 * @return
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> long count(Class<T> beanClass) throws EntityException {
+	public <T> long count(Class<T> beanClass){
 		try {
 			return SESSION.count(beanClass);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -99,16 +98,16 @@ public class BaseDao {
 	 * 
 	 * @param sqlObj
 	 * @return
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public long count(SQL sqlObj) throws EntityException {
+	public long count(SQL sqlObj){
 		try {
 			return SESSION.count(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -117,16 +116,16 @@ public class BaseDao {
 	 * 
 	 * @param sqlObj
 	 * @return
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> T find(SQL sqlObj) throws EntityException {
+	public <T> T find(SQL sqlObj){
 		try {
 			return SESSION.find(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -136,14 +135,14 @@ public class BaseDao {
 	 * @param bean
 	 *            实体对象,此对象一定要有相关的主属性，否则抛出SQL异常
 	 * @return 假如参数为null，返回null，没有符合要求的数据也返回null
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> T find(T bean) throws EntityException {
+	public <T> T find(T bean){
 		try {
 			return SESSION.find(bean);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -155,14 +154,14 @@ public class BaseDao {
 	 * @param keyValues
 	 *            主键属性值(单主键)
 	 * @return 假如参数为null，返回null，没有符合要求的数据也返回null
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象类型对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> T find(Class<T> beanClass, Object keyValue) throws EntityException {
+	public <T> T find(Class<T> beanClass, Object keyValue){
 		try {
 			return SESSION.find(beanClass, keyValue);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -174,14 +173,14 @@ public class BaseDao {
 	 * @param keyValues
 	 *            主键属性值数组(复合主键)
 	 * @return 假如参数为null，返回null，没有符合要求的数据也返回null
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> T find(Class<T> beanClass, Object... keyValues) throws EntityException {
+	public <T> T find(Class<T> beanClass, Object... keyValues){
 		try {
 			return SESSION.find(beanClass, keyValues);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -191,14 +190,14 @@ public class BaseDao {
 	 * @param beanClass
 	 *            bean类型
 	 * @return
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> List<T> list(Class<T> beanClass) throws EntityException {
+	public <T> List<T> list(Class<T> beanClass){
 		try {
 			return SESSION.list(beanClass);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -207,16 +206,16 @@ public class BaseDao {
 	 * 
 	 * @param sqlObj
 	 * @return
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> List<T> list(SQL sqlObj) throws EntityException {
+	public <T> List<T> list(SQL sqlObj){
 		try {
 			return SESSION.list(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -225,14 +224,14 @@ public class BaseDao {
 	 * 
 	 * @param beanClass
 	 * @return
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Set<T> set(Class<T> beanClass) throws EntityException {
+	public <T> Set<T> set(Class<T> beanClass){
 		try {
 			return SESSION.set(beanClass);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -241,16 +240,16 @@ public class BaseDao {
 	 * 
 	 * @param sqlObj
 	 * @return
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> Set<T> set(SQL sqlObj) throws EntityException {
+	public <T> Set<T> set(SQL sqlObj){
 		try {
 			return SESSION.set(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -259,16 +258,16 @@ public class BaseDao {
 	 * 
 	 * @param beanClass
 	 * @return 假如返回true，删除数据成功，返回false，删除数据失败
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> boolean delete(Class<T> beanClass) throws EntityException {
+	public <T> boolean delete(Class<T> beanClass){
 		try {
 			return SESSION.delete(beanClass);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -277,16 +276,16 @@ public class BaseDao {
 	 * 
 	 * @param bean
 	 * @return 假如返回true，删除数据成功，返回false，删除数据失败
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> boolean delete(T bean) throws EntityException {
+	public <T> boolean delete(T bean){
 		try {
 			return SESSION.delete(bean);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -295,16 +294,16 @@ public class BaseDao {
 	 * 
 	 * @param sql
 	 * @return 假如返回true，删除数据成功，返回false，删除数据失败
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public boolean update(SQL sql) throws EntityException {
+	public boolean update(SQL sql){
 		try {
 			return SESSION.update(sql);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -316,14 +315,14 @@ public class BaseDao {
 	 * @param keyValues
 	 *            主键属性值(单主键)
 	 * @return 假如返回true，删除数据成功，返回false，删除数据失败
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> boolean delete(Class<T> beanClass, Object keyValue) throws EntityException {
+	public <T> boolean delete(Class<T> beanClass, Object keyValue){
 		try {
 			return SESSION.delete(beanClass, keyValue);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -335,14 +334,14 @@ public class BaseDao {
 	 * @param keyValues
 	 *            主键属性值数组(复合主键)
 	 * @return 假如返回true，删除数据成功，返回false，删除数据失败
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> boolean delete(Class<T> beanClass, Object... keyValues) throws EntityException {
+	public <T> boolean delete(Class<T> beanClass, Object... keyValues){
 		try {
 			return SESSION.delete(beanClass, keyValues);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -351,14 +350,14 @@ public class BaseDao {
 	 * 
 	 * @param bean
 	 * @return 假如返回true，更新数据成功，返回false，更新数据失败
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> boolean update(T bean) throws EntityException {
+	public <T> boolean update(T bean){
 		try {
 			return SESSION.update(bean);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -371,14 +370,14 @@ public class BaseDao {
 	 * @return 假如bean对象属性中有别的bean对象或别的bean对象集合。
 	 *         <p>
 	 *         调用这个函数都会封装，如果没有则与find(T bean)的效果相同。
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> T findE(T bean) throws EntityException {
+	public <T> T findE(T bean){
 		try {
 			return SESSION.findE(bean);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -387,16 +386,16 @@ public class BaseDao {
 	 * 
 	 * @param sql
 	 * @return 从不返回null
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public DataSet findDataSet(SQL sql) throws EntityException {
+	public DataSet findDataSet(SQL sql){
 		try {
 			return SESSION.findDataSet(sql);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -405,16 +404,16 @@ public class BaseDao {
 	 * 
 	 * @param sql
 	 * @return 从不返回null, 如无数据返回大小为0的数组
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Object[] array(SQL sql) throws EntityException {
+	public Object[] array(SQL sql){
 		try {
 			return SESSION.array(sql);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -423,16 +422,16 @@ public class BaseDao {
 	 * 
 	 * @param sql
 	 * @return 从不返回null, 如无数据返回大小为0的集合
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public List<Object[]> listArray(SQL sql) throws EntityException {
+	public List<Object[]> listArray(SQL sql){
 		try {
 			return SESSION.listArray(sql);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -441,16 +440,16 @@ public class BaseDao {
 	 * 
 	 * @param sql
 	 * @return 从不返回null, 如无数据返回大小为0的集合
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Map<String, Object> map(SQL sql) throws EntityException {
+	public Map<String, Object> map(SQL sql){
 		try {
 			return SESSION.map(sql);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -459,16 +458,16 @@ public class BaseDao {
 	 * 
 	 * @param sql
 	 * @return 从不返回null, 如无数据返回大小为0的集合
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public List<Map<String, Object>> listMap(SQL sql) throws EntityException {
+	public List<Map<String, Object>> listMap(SQL sql){
 		try {
 			return SESSION.listMap(sql);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -480,16 +479,16 @@ public class BaseDao {
 	 * @param page
 	 *            分页对象
 	 * @return 返回完整分页对象
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public <T> Page<T> searchPage(SQL sql, Page<T> page) throws EntityException {
+	public <T> Page<T> searchPage(SQL sql, Page<T> page){
 		try {
 			return SESSION.searchPage(sql, page);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -500,14 +499,14 @@ public class BaseDao {
 	 * @param maxFieldName
 	 *            要求最大值字段名称对应的bean的属性名称
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Double max(Class<T> beanClass, String maxFieldName) throws EntityException {
+	public <T> Double max(Class<T> beanClass, String maxFieldName){
 		try {
 			return SESSION.max(beanClass, maxFieldName);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -516,16 +515,16 @@ public class BaseDao {
 	 * 
 	 * @param sqlObj
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Double max(SQL sqlObj) throws EntityException {
+	public Double max(SQL sqlObj){
 		try {
 			return SESSION.max(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -536,14 +535,14 @@ public class BaseDao {
 	 * @param minFieldName
 	 *            要求最小值字段名称对应的bean的属性名称
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Double min(Class<T> beanClass, String minFieldName) throws EntityException {
+	public <T> Double min(Class<T> beanClass, String minFieldName){
 		try {
 			return SESSION.min(beanClass, minFieldName);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -552,16 +551,16 @@ public class BaseDao {
 	 * 
 	 * @param sqlObj
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Double min(SQL sqlObj) throws EntityException {
+	public Double min(SQL sqlObj){
 		try {
 			return SESSION.min(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -572,14 +571,14 @@ public class BaseDao {
 	 * @param avgFieldName
 	 *            要求平均值字段名称对应的bean的属性名称
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Double avg(Class<T> beanClass, String avgFieldName) throws EntityException {
+	public <T> Double avg(Class<T> beanClass, String avgFieldName){
 		try {
 			return SESSION.avg(beanClass, avgFieldName);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -588,16 +587,16 @@ public class BaseDao {
 	 * 
 	 * @param sqlObj
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Double avg(SQL sqlObj) throws EntityException {
+	public Double avg(SQL sqlObj){
 		try {
 			return SESSION.avg(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -608,14 +607,14 @@ public class BaseDao {
 	 * @param sumFieldName
 	 *            要求和段名称对应的bean的属性名称
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
-	public <T> Double sum(Class<T> beanClass, String sumFieldName) throws EntityException {
+	public <T> Double sum(Class<T> beanClass, String sumFieldName){
 		try {
 			return SESSION.sum(beanClass, sumFieldName);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 
@@ -624,16 +623,16 @@ public class BaseDao {
 	 * 
 	 * @param sqlObj
 	 * @return 从不返回null，假如无数据返回0
-	 * @throws EntityException
+	 * @throws EntityException OptionDBException 
 	 *             假如数据库访问出错时，抛出该异常
 	 * @throws NullPointerException
 	 *             假如参数为null，抛出该异常
 	 */
-	public Double sum(SQL sqlObj) throws EntityException {
+	public Double sum(SQL sqlObj){
 		try {
 			return SESSION.sum(sqlObj);
 		} catch (SQLException e) {
-			throw new EntityException(e);
+			throw new OptionDBException(e);
 		}
 	}
 }
