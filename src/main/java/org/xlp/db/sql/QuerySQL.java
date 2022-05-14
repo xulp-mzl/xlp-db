@@ -23,11 +23,6 @@ import org.xlp.utils.XLPStringUtil;
  */
 public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	/**
-	 * 去重字段
-	 */
-	private String distinctField;
-	
-	/**
 	 * 是否去重 
 	 */
 	private boolean distinct;
@@ -204,10 +199,7 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 		String tableAlias = SQLUtil.getTableAlias(getTable());
 		
 		StringBuilder pre = new StringBuilder("select ");
-		if (!XLPStringUtil.isEmpty(distinctField)) { 
-			pre.append(" distinct(").append(tableAlias).append(distinctField)
-				.append(")").append(COMMA); 
-		} else if (distinct){
+		if (distinct){
 			pre.append(" distinct ");
 		}
 		// 假如要查的列长度0，则查询全部的列
@@ -238,18 +230,6 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 		return this;
 	}
 	
-	/**
-	 * 去除重复的数据
-	 */
-	public QuerySQL<T> distinct(String fieldName) {
-		if(fieldName == null)
-			return this;
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
-		distinctField = colName;
-		return this;
-	}
-
 	/**
 	 * 分页查询信息，暂时只支持mysql数据库
 	 * 

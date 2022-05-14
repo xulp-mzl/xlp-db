@@ -51,24 +51,6 @@ public final class SQLUtil {
 	}
 
 	/**
-	 * 形成单表的无条件删除语句
-	 * 
-	 * @param beanClass
-	 * @return
-	 */
-	public static <T> String delete(Class<T> beanClass) {
-		String tableName = getTableName(beanClass);
-		if (tableName == null) {
-			return null;
-		}
-
-		StringBuffer deleteSql = new StringBuffer("DELETE FROM ").append(
-				tableName).append(" WHERE 1=1 ");
-
-		return deleteSql.toString();
-	}
-	
-	/**
 	 * 用给定的参数值填充SQL语句中的问号
 	 * 
 	 * @param sql 带问号的SQL语句

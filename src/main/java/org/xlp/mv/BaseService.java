@@ -1,16 +1,21 @@
 package org.xlp.mv;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.page.Page;
+import org.xlp.db.sql.CountSQL;
+import org.xlp.db.sql.QuerySQL;
 import org.xlp.db.sql.SQL;
 import org.xlp.db.sql.limit.Limit;
 import org.xlp.db.tableoption.handlers.result.DataSet;
 import org.xlp.utils.XLPArrayUtil;
+import org.xlp.utils.XLPStringUtil;
 
 /**
  * 
@@ -556,5 +561,53 @@ public class BaseService implements IBaseService{
 	 */
 	public Double sum(SQL sqlObj){
 		return BASEDAO.sum(sqlObj);
+	}
+
+	@Override
+	public <T> T find(Class<T> beanClass, String fieldName, Object value) {
+		List<T> list = list(beanClass, fieldName, value);
+		return list.isEmpty() ? null : list.get(0);
+	}
+
+	@Override
+	public <T> T find(Class<T> beanClass, Map<String, Object> parms) {
+		List<T> list = list(beanClass, parms);
+		return list.isEmpty() ? null : list.get(0);
+	}
+
+	@Override
+	public <T> List<T> list(Class<T> beanClass, String fieldName, Object value) {
+		if (beanClass == null || XLPStringUtil.isEmpty(fieldName)) {
+			return new ArrayList<T>(0);
+		}
+		QuerySQL<T> querySQL = new QuerySQL<>(beanClass);
+		querySQL.andEq(fieldName, value);
+		return list(querySQL);
+	}
+
+	@Override
+	public <T> List<T> list(Class<T> beanClass, Map<String, Object> parms) {
+		if (beanClass == null || parms == null || parms.isEmpty()) {
+			return new ArrayList<T>(0);
+		}
+		QuerySQL<T> querySQL = new QuerySQL<>(beanClass);
+		for (Entry<String, Object> entry : parms.entrySet()) {
+			querySQL.andEq(entry.getKey(), entry.getValue());
+		}
+		return list(querySQL);
+	}
+
+	@Override
+	public <T> long count(Class<T> beanClass, String fieldName) {
+		CountSQL<T> countSQL = new CountSQL<>(beanClass);
+		countSQL.count(fieldName);
+		return count(countSQL);
+	}
+
+	@Override
+	public <T> long distinctCount(Class<T> beanClass, String... fieldNames) {
+		CountSQL<T> countSQL = new CountSQL<>(beanClass);
+		countSQL.distinctCount(fieldNames);
+		return count(countSQL);
 	}
 }

@@ -1,6 +1,9 @@
 package org.xlp.db.sql;
 
 import org.xlp.db.exception.EntityException;
+import org.xlp.db.utils.BeanUtil;
+import org.xlp.utils.XLPArrayUtil;
+import org.xlp.utils.XLPStringUtil;
 
 /**
  * 可含条件单表数据条数统计SQL信息类
@@ -13,6 +16,16 @@ import org.xlp.db.exception.EntityException;
  */
 public class CountSQL<T> extends QuerySQLAbstract<T>{
 	private final static String COUNT_STRING = "select count(*) from ";
+	
+	/**
+	 * 是否去重 
+	 */
+	private String[] distinctFields;
+	
+	/**
+	 * 计算字段名称，distinctFields值不为空时，该字段值不生效
+	 */
+	private String countField;
 	
 	/**
 	 * 用bean对象构建此对象
@@ -43,7 +56,22 @@ public class CountSQL<T> extends QuerySQLAbstract<T>{
 	private String preSql(boolean source) {
 		String tableAlias = SQLUtil.getTableAlias(getTable());
 		StringBuilder sb = new StringBuilder();
-		sb.append(COUNT_STRING).append(getTable().getTableName())
+		//select count(*) from 
+		if (!XLPArrayUtil.isEmpty(distinctFields)) { 
+			sb.append("select count(distinct ");
+			for (int i = 0; i < distinctFields.length; i++) { 
+				if (i != 0) {
+					sb.append(COMMA);
+				}
+				sb.append(tableAlias).append(distinctFields[i]);
+			}
+			sb.append(") from ");
+		} else if (!XLPStringUtil.isEmpty(countField)) {
+			sb.append("select count(").append(tableAlias).append(countField).append(") from ");
+		} else {
+			sb.append(COUNT_STRING);
+		}
+		sb.append(getTable().getTableName())
 			.append(" ")
 			.append(tableAlias.isEmpty() ? tableAlias : tableAlias.substring(0, tableAlias.length() - 1))
 			.append(" ");
@@ -72,5 +100,38 @@ public class CountSQL<T> extends QuerySQLAbstract<T>{
 
 	@Override
 	protected void init(T bean) throws EntityException {
+	}
+	
+	/**
+	 * 计算字段名称
+	 * 
+	 * @param fieldName
+	 * @return
+	 */
+	public CountSQL<T> count(String fieldName){
+		if (!XLPStringUtil.isEmpty(fieldName)) {
+			String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
+			colName = (colName == null ? fieldName : colName);
+			countField = colName;
+		}
+		return this;
+	}
+	
+	/**
+	 * 计算字段名称
+	 * 
+	 * @param fieldName
+	 * @return
+	 */
+	public CountSQL<T> distinctCount(String... fieldNames){
+		if (!XLPArrayUtil.isEmpty(fieldNames)) { 
+			distinctFields = new String[fieldNames.length];
+			for (int i = 0; i < fieldNames.length; i++) {
+				String colName = BeanUtil.getFieldAlias(beanClass, fieldNames[i]);
+				colName = (colName == null ? fieldNames[i] : colName);
+				distinctFields[i] = fieldNames[i];
+			}
+		}
+		return this;
 	}
 }

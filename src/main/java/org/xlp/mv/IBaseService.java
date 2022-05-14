@@ -475,4 +475,82 @@ public interface IBaseService {
 	 *             假如参数为null，抛出该异常
 	 */
 	public Double sum(SQL sqlObj);
+	
+	/**
+	 * 通过单条件查找数据
+	 * 
+	 * @param beanClass
+	 *            对象类型
+	 * @param fieldName
+	 *            字段名称
+	 * @param value
+	 * 			  字段对应的值
+	 * @return 假如参数为null，返回null，没有符合要求的数据也返回null
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
+	 */
+	<T> T find(Class<T> beanClass, String fieldName, Object value);
+	
+	/**
+	 * 通过多条件查找数据
+	 * 
+	 * @param beanClass
+	 *            对象类型
+	 * @param parms
+	 *            key:字段名称, value: 字段对应的值
+	 * @return 假如参数为null，返回null，没有符合要求的数据也返回null
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
+	 */
+	public <T> T find(Class<T> beanClass, Map<String, Object> parms);
+	
+	/**
+	 * 通过单条件查找数据
+	 * 
+	 * @param beanClass
+	 *            对象类型
+	 * @param fieldName
+	 *            字段名称
+	 * @param value
+	 * 			  字段对应的值
+	 * @return 假如参数为null，返回null，没有符合要求的数据也返回null
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
+	 */
+	public <T> List<T> list(Class<T> beanClass, String fieldName, Object value);
+	
+	/**
+	 * 通过多条件查找数据
+	 * 
+	 * @param beanClass
+	 *            对象类型
+	 * @param parms
+	 *            key:字段名称, value: 字段对应的值
+	 * @return 假如参数为null，返回null，没有符合要求的数据也返回null
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
+	 */
+	<T> List<T> list(Class<T> beanClass, Map<String, Object> parms);
+	
+	/**
+	 * 得到单表数据的条数
+	 * 
+	 * @param beanClass
+	 * @param fieldName 统计的字段名称
+	 * @return
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
+	 */
+	public <T> long count(Class<T> beanClass, String fieldName);
+	
+	/**
+	 * 得到单表数据的条数
+	 * 
+	 * @param beanClass
+	 * @param fieldNames 去重统计的字段名称
+	 * @return
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
+	 */
+	public <T> long distinctCount(Class<T> beanClass, String... fieldNames);
 }
