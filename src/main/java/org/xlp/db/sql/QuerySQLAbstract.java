@@ -1,6 +1,12 @@
 package org.xlp.db.sql;
 
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.utils.BeanUtil;
 
@@ -15,10 +21,15 @@ import org.xlp.db.utils.BeanUtil;
  * @version 1.0
  */
 public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T>{
-	//记录是否已排序
-	private boolean isSorted = false;
-	//是否分组
-	private boolean isGroup = false;
+	/**
+	 * 存储排序字段
+	 */
+	private Map<String, String> sortFields = new LinkedHashMap<String, String>();
+	
+	/**
+	 * 存储分组字段
+	 */
+	private Set<String> groupFields = new LinkedHashSet<String>();
 	
 	public QuerySQLAbstract(Class<T> beanClass) throws EntityException {
 		super(beanClass);
@@ -45,13 +56,8 @@ public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T>{
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 		
-		if(!isSorted){
-			partSql.append(" order by ");
-			isSorted = true;
-		}else
-			partSql.append(COMMA);
-		partSql.append(getTableName()).append(".")
-			.append(colName).append(" ").append(orderType).append(" ");
+		sortFields.put(colName, orderType);
+		
 		return this;
 	}
 	
@@ -87,12 +93,42 @@ public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T>{
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 		
-		if(!isGroup){
-			partSql.append("group by ");
-			isGroup = true;
-		} else
-			partSql.append(COMMA);
-		partSql.append(getTableName()).append(".").append(colName).append(" ");
+		groupFields.add(colName);
 		return this;
+	}
+	
+	/**
+	 * 分组排序sql片段
+	 * 
+	 * @return
+	 */
+	protected String formatterGroupByAndOrderBySql(){
+		String tableAlias = SQLUtil.getTableAlias(getTable());
+		
+		StringBuilder sb = new StringBuilder();
+		boolean start = true;
+		if (!groupFields.isEmpty()) {
+			sb.append(" group by ");
+			for (String group : groupFields) {
+				if (!start) {
+					sb.append(COMMA).append(" ");
+				}
+				sb.append(tableAlias).append(group);
+				start = false;
+			}
+		}
+		if (!sortFields.isEmpty()) {
+			sb.append(" order by ");
+			start = true;
+			for (Entry<String, String> sort : sortFields.entrySet()) {
+				if (!start) {
+					sb.append(COMMA).append(" ");
+				}
+				sb.append(tableAlias).append(sort.getKey())
+					.append(" ").append(sort.getValue());
+				start = false;
+			}
+		}
+		return sb.toString();
 	}
 }

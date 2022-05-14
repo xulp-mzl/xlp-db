@@ -63,7 +63,6 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 		UpdateSQL<T> updateSQL = new UpdateSQL<T>();
 		updateSQL.primaryKey = new CompoundPrimaryKey(bean);
 		updateSQL.beanClass = beanClass;
-		updateSQL.setTableName();
 		//初始化条件
 		int keyCount = updateSQL.primaryKey.getCount();
 		String[] keyNames = updateSQL.primaryKey.getNames();
@@ -176,19 +175,25 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 		if(size < 1)
 			return null;
 		
-		String tableName = getTableName();
-		StringBuilder pre = new StringBuilder("update ").append(tableName)
+		String tableAlias = SQLUtil.getTableAlias(getTable());
+		StringBuilder pre = new StringBuilder("update ").append(getTable().getTableName())
+			.append(" ")
+			.append(tableAlias.isEmpty() ? tableAlias : tableAlias.substring(0, tableAlias.length() - 1))
 			.append(" set ");
 		for (int i = 0; i < size; i++) {
 			if(i != 0)
 				pre.append(COMMA);
-			pre.append(tableName).append(".")
-				.append(columnNames.get(i)).append("=?");
+			pre.append(tableAlias).append(columnNames.get(i)).append("=?");
 		}
-		
-		String sql = pre.append(partSql).toString();
-		LOGGER.debug("形成的更新SQL语句是：" + sql);
-		return sql;
+		//拼接条件
+		String condition = formatterConditionSql();
+		if (!condition.isEmpty()) {
+			pre.append(" where ").append(condition);
+		}
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("形成的更新SQL语句是：" + pre);
+		}
+		return pre.toString();
 	}
 
 	@Override
@@ -197,15 +202,16 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 		if(size < 1)
 			return null;
 		
-		String tableName = getTableName();
-		StringBuilder pre = new StringBuilder("update ").append(tableName)
+		String tableAlias = SQLUtil.getTableAlias(getTable());
+		StringBuilder pre = new StringBuilder("update ").append(getTable().getTableName())
+			.append(" ")
+			.append(tableAlias.isEmpty() ? tableAlias : tableAlias.substring(0, tableAlias.length() - 1))
 			.append(" set ");
 		
 		for (int i = 0; i < size; i++) {
 			if(i != 0)
 				pre.append(COMMA);
-			pre.append(tableName).append(".")
-				.append(columnNames.get(i)).append("=");
+			pre.append(tableAlias).append(columnNames.get(i)).append("=");
 			Object value = null;
 			if ((value = updateValues.get(i)) == null){
 				pre.append("null");
@@ -222,14 +228,25 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 					pre.append(value);
 			}
 		}
-		String sql = pre.append(partSqlToString()).toString();
-		LOGGER.debug("形成的更新SQL语句是：" + sql);
-		return sql;
+		//拼接条件
+		String condition = formatterConditionSourceSql();
+		if (!condition.isEmpty()) {
+			pre.append(" where ").append(condition);
+		}
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("形成的更新SQL语句是：" + pre);
+		}
+		return pre.toString();
 	}
 
 	@Override
 	public Object[] getParams() {
-		 updateValues.addAll(valueList);
-		 return updateValues.toArray();
+		 List<Object> tempValues = new ArrayList<Object>();
+		 tempValues.addAll(updateValues);
+		 Object[] values = super.getParams();
+		 for (Object value : values) {
+			 tempValues.add(value);
+		 }
+		 return tempValues.toArray();
 	}
 }

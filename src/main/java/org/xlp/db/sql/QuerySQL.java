@@ -22,10 +22,16 @@ import org.xlp.utils.XLPStringUtil;
  * @version 1.0
  */
 public class QuerySQL<T> extends QuerySQLAbstract<T> {
-	// 实体对应的table对象
-	private Table<T> table;
-	// 标记是否去除重复的数据
+	/**
+	 * 去重字段
+	 */
+	private String distinctField;
+	
+	/**
+	 * 是否去重 
+	 */
 	private boolean distinct;
+	
 	// limit对象
 	private Limit limit;
 	// 要查询出列的数据
@@ -41,7 +47,7 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public QuerySQL(T bean) throws EntityException {
 		super(bean);
-		columnNames.addAll(Arrays.asList(table.getAllColumnNames()));
+		columnNames.addAll(Arrays.asList(getTable().getAllColumnNames()));
 	}
 
 	/**
@@ -54,7 +60,7 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public QuerySQL(Class<T> beanClass) throws EntityException {
 		super(beanClass);
-		columnNames.addAll(Arrays.asList(table.getAllColumnNames()));
+		columnNames.addAll(Arrays.asList(getTable().getAllColumnNames()));
 	}
 
 	private QuerySQL() {
@@ -77,10 +83,9 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 		QuerySQL<T> querySQL = new QuerySQL<T>();
 		@SuppressWarnings("unchecked")
 		Class<T> beanClass = (Class<T>) bean.getClass();
-		querySQL.table = new Table<T>(beanClass);
+		querySQL.setTable(new Table<T>(beanClass));
 		querySQL.beanClass = beanClass;
 		querySQL.primaryKey = new CompoundPrimaryKey(bean, false);
-		querySQL.setTableName();
 		return querySQL;
 	}
 
@@ -132,7 +137,6 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	 */
 	@Override
 	protected void init(T bean) throws EntityException {
-		table = new Table<T>(beanClass);
 		int count = primaryKey.getCount();
 
 		String[] keyNames = primaryKey.getNames();
@@ -147,46 +151,48 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 
 	}
 
-	/**
-	 * 给实体设置别名
-	 * 
-	 * @param alias
-	 */
-	public QuerySQL<T> setAlias(String alias) {
-		table.setAlias(alias);
-		return this;
-	}
-
 	@Override
 	public String getParamSql() {
-		String alias = table.getAlias();
+		StringBuilder sb = new StringBuilder();
+		sb.append(preSql());
+		//拼接条件
+		String condition = formatterConditionSql();
+		if (!condition.isEmpty()) {
+			sb.append("where ").append(condition);
+		}
+		//拼接分组排序
+		sb.append(formatterGroupByAndOrderBySql());
+		
 		if (limit != null && limit.getDbType() == DBType.MYSQL_DB)
-			partSql.append(" limit ?,?");
+			sb.append(" limit ?,?");
 
-		String partSql0 = partSql.toString();
-		String tableName = getTableName();
-		alias = (alias == null ? tableName + "_0" : alias);
-
-		partSql0 = partSql0.replace(tableName + ".", alias + ".");
-		String sql = preSql().append(partSql0).toString();
-		LOGGER.debug("形成的查询SQL语句是：" + sql);
-		return sql;
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("形成的查询SQL语句是：" + sb);
+		}
+		return sb.toString();
 	}
 
 	@Override
 	public String getSql() {
-		String alias = table.getAlias();
-		if (limit != null && limit.getDbType() == DBType.MYSQL_DB)
-			partSql.append(" limit ?,?");
+		StringBuilder sb = new StringBuilder();
+		sb.append(preSql());
+		//拼接条件
+		String condition = formatterConditionSourceSql();
+		if (!condition.isEmpty()) {
+			sb.append("where ").append(condition);
+		}
+		//拼接分组排序
+		sb.append(formatterGroupByAndOrderBySql());
+		
+		if (limit != null && limit.getDbType() == DBType.MYSQL_DB){
+			sb.append(" limit ").append(limit.getStartPos())
+				.append(COMMA).append(limit.getResultCount());
+		}
 
-		String partSql0 = partSqlToString();
-		String tableName = getTableName();
-		alias = (alias == null ? tableName + "_0" : alias);
-
-		partSql0 = partSql0.replace(tableName + ".", alias + ".");
-		String sql = preSql().append(partSql0).toString();
-		LOGGER.debug("形成的查询SQL语句是：" + sql);
-		return sql;
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("形成的查询SQL语句是：" + sb);
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -194,28 +200,33 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	 * 
 	 * @return
 	 */
-	protected StringBuilder preSql() {
+	private StringBuilder preSql() {
+		String tableAlias = SQLUtil.getTableAlias(getTable());
+		
 		StringBuilder pre = new StringBuilder("select ");
-		if (distinct)
-			pre.append("distinct ");
-		String tableName = getTableName();
+		if (!XLPStringUtil.isEmpty(distinctField)) { 
+			pre.append(" distinct(").append(tableAlias).append(distinctField)
+				.append(")").append(COMMA); 
+		} else if (distinct){
+			pre.append(" distinct ");
+		}
 		// 假如要查的列长度0，则查询全部的列
 		if (columnNames.size() == 0)
-			columnNames = Arrays.asList(table.getAllColumnNames());
-		String alias = table.getAlias();
-		alias = (alias == null ? tableName + "_0" : alias);
+			columnNames = Arrays.asList(getTable().getAllColumnNames());
 
 		int len = columnNames.size();
 		if (len == 0) {
-			pre.append(" *");
+			pre.append(tableAlias).append("*");
 		} else {
 			for (int i = 0; i < len; i++) {
 				if (i != 0)
 					pre.append(COMMA);
-				pre.append(alias).append(".").append(columnNames.get(i));
+				pre.append(tableAlias).append(columnNames.get(i));
 			}
 		}
-		pre.append(" from ").append(tableName).append(" ").append(alias);
+		pre.append(" from ").append(getTable().getTableName()).append(" ")
+			.append(tableAlias.isEmpty() ? tableAlias : tableAlias.substring(0, tableAlias.length() - 1))
+			.append(" ");
 		return pre;
 	}
 
@@ -224,6 +235,18 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public QuerySQL<T> distinct() {
 		distinct = true;
+		return this;
+	}
+	
+	/**
+	 * 去除重复的数据
+	 */
+	public QuerySQL<T> distinct(String fieldName) {
+		if(fieldName == null)
+			return this;
+		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
+		colName = (colName == null ? fieldName : colName);
+		distinctField = colName;
 		return this;
 	}
 
@@ -243,19 +266,13 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 
 	@Override
 	public Object[] getParams() {
+		Object[] values = super.getParams();
 		if (limit != null && limit.getDbType() == DBType.MYSQL_DB) {
-			valueList.add(limit.getStartPos());
-			valueList.add(limit.getResultCount());
+			int length = values.length;
+			values = Arrays.copyOf(values, length + 2);
+			values[length] = limit.getStartPos();
+			values[length +1] = limit.getResultCount();
 		}
-		return super.getParams();
-	}
-
-	/**
-	 * 获取table对象
-	 * 
-	 * @return
-	 */
-	public Table<T> getTable() {
-		return table;
+		return values;
 	}
 }

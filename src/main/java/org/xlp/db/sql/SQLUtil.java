@@ -1,7 +1,10 @@
 package org.xlp.db.sql;
 
+import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.annotation.XLPEntity;
+import org.xlp.db.tableoption.xlpenum.DBType;
 import org.xlp.db.utils.BeanUtil;
+import org.xlp.db.utils.XLPDBUtil;
 import org.xlp.utils.XLPOutputInfoUtil;
 import org.xlp.utils.XLPStringUtil;
 
@@ -97,5 +100,58 @@ public final class SQLUtil {
 		}
 		
 		return sql.toString();
+	}
+	
+	/**
+	 * 获取(?,?,?)格式的sql片段
+	 * 
+	 * @param length
+	 * @return
+	 */
+	static String formatInSql(int length){
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < length; i++) {
+			if (i == 0) {
+				sb.append(SQL.LEFT_BRACKET).append(SQL.INTERROGATION);
+			}
+			sb.append(SQL.COMMA).append(SQL.INTERROGATION);
+		}
+		if (length > 0) {
+			sb.append(SQL.RIGHT_BRACKET);
+		}
+		return sb.toString();
+ 	}
+	
+	/**
+	 * 获取table别名
+	 * @param table
+	 * @return 格式为""或xxx.
+	 */
+	static String getTableAlias(Table<?> table){
+		String tableAlias = table.getAlias();
+		tableAlias = XLPStringUtil.isEmpty(tableAlias) ? XLPStringUtil.EMPTY : tableAlias + ".";
+		return tableAlias;
+	}
+	
+	/**
+	 * 数据库名称
+	 */
+	private static final String MYSQL = "MySQL";
+	/**
+	 * 当前使用的数据库类型
+	 */
+	private static DBType DB_TYPE;
+	/**
+	 * 获取当前使用的数据库类型
+	 * @return
+	 */
+	public static DBType getDBType() {
+		if (DB_TYPE == null) {
+			String dbName = XLPDBUtil.getDatabaseProductName();
+			if (MYSQL.equalsIgnoreCase(dbName)) {
+				DB_TYPE = DBType.MYSQL_DB;
+			}
+		}
+		return DB_TYPE;
 	}
 }

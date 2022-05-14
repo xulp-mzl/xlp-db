@@ -1,13 +1,20 @@
 package org.xlp.db.sql;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Stack;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xlp.db.exception.EntityException;
+import org.xlp.db.sql.item.ConnectorEnum;
+import org.xlp.db.sql.item.FieldItem;
+import org.xlp.db.sql.item.OperatorEnum;
+import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.key.CompoundPrimaryKey;
 import org.xlp.db.utils.BeanUtil;
+import org.xlp.utils.XLPSplitUtils;
 
 /**
  * 含条件单表SQL信息抽象类
@@ -24,15 +31,17 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	protected final static Logger LOGGER = LoggerFactory.getLogger(OneTableSQLAbstract.class);
 	//bean类型
 	protected Class<T> beanClass;
-	//表名
-	private String tableName;
-	//条件之后的预处理值集合
-	protected List<Object> valueList = new ArrayList<Object>();
-	//条件SQL
-	protected StringBuilder partSql = new StringBuilder(WHERE); 
+	
+	// 实体对应的table对象
+	private Table<T> table;
+	
+	/**
+	 * sql条件对象集合
+	 */
+	protected List<FieldItem> fieldItems = new ArrayList<FieldItem>();
+	
 	//主键信息
 	protected CompoundPrimaryKey primaryKey;
-	protected static final String WHERE = " where 1=1 ";
 	
 	
 	/**
@@ -51,18 +60,11 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 			throw new EntityException("此对象不是实体");
 		}
 		this.primaryKey = new CompoundPrimaryKey(bean, false);
-		setTableName();
+		table = new Table<T>(beanClass);
 		init(bean);
 	}
 	
 	protected OneTableSQLAbstract(){}
-	
-	/**
-	 * 初始化表名
-	 */
-	protected void setTableName(){
-		tableName = SQLUtil.getTableName(beanClass);
-	}
 	
 	/**
 	 * 数据初始化
@@ -82,12 +84,30 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	}
 	
 	/**
-	 * 得到表名
+	 * 得到表对象
 	 * 
 	 * @return
 	 */
-	public String getTableName() {
-		return tableName;
+	public Table<T> getTable() {
+		return table;
+	}
+	
+	/**
+	 * 设置表对象
+	 * 
+	 * @return
+	 */
+	protected void setTable(Table<T> table) {
+		this.table = table;
+	}
+	
+	/**
+	 * 给表设置别名 
+	 * 
+	 * @param alias
+	 */
+	public void setTableAlias(String alias) {
+		table.setAlias(alias);
 	}
 	
 	/**
@@ -109,21 +129,20 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * 
 	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
 	 * @param value 其对应值
-	 * @param condition 条件（and | or）
+	 * @param connector 条件（and | or）
 	 * @param op 操作符（=，>, < ...）
 	 * @return
 	 */
 	private OneTableSQLAbstract<T>  M(String fieldName, Object value
-			, String condition, String op){
+			, ConnectorEnum connector, OperatorEnum op){
 		if(fieldName == null)
 			return this;
 		
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 	
-		partSql.append(" ").append(condition).append(" ").append(tableName).append(".")
-			.append(colName).append(op).append(INTERROGATION);
-		valueList.add(value);
+		fieldItems.add(new FieldItem(connector, op, fieldName, value, table));
+		
 		return this;
 	}
 	
@@ -131,19 +150,19 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * null
 	 * 
 	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
-	 * @param condition 条件（and | or）
+	 * @param connector 条件（and | or）
 	 * @param op 操作符（is null，is not null）
 	 * @return
 	 */
 	private OneTableSQLAbstract<T> NULL(String fieldName
-			, String condition, String op){
+			, ConnectorEnum connector, OperatorEnum op){
 		if(fieldName == null)
 			return this;
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 		
-		partSql.append(" ").append(condition).append(" ").append(tableName).append(".")
-			.append(colName).append(" ").append(op);
+		fieldItems.add(new FieldItem(connector, op, fieldName, null, table));
+		
 		return this;
 	}
 	
@@ -158,7 +177,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		if(value == null)
 			return orIsNull(fieldName);
 		
-		return M(fieldName, value, OR, EQ);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.EQ);
 	}
 	
 	/**
@@ -168,7 +187,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orIsNull(String fieldName){
-		return NULL(fieldName, OR, IS_NULL);
+		return NULL(fieldName, ConnectorEnum.OR, OperatorEnum.IS_NULL);
 	}
 	
 	/**
@@ -182,7 +201,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		if(value == null)
 			return andIsNull(fieldName);
 		
-		return M(fieldName, value, AND, EQ);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.EQ);
 	}
 	
 	/**
@@ -192,7 +211,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andIsNull(String fieldName){
-		return NULL(fieldName, AND, IS_NULL);
+		return NULL(fieldName, ConnectorEnum.AND, OperatorEnum.IS_NULL);
 	}
 
 	/**
@@ -206,7 +225,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		if(value == null)
 			return orNotNull(fieldName);
 
-		return M(fieldName, value, OR, NOT_EQ);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.NEQ);
 	}
 	
 	/**
@@ -216,7 +235,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orNotNull(String fieldName){
-		return NULL(fieldName, OR, IS_NOT_NULL);
+		return NULL(fieldName, ConnectorEnum.OR, OperatorEnum.IS_NOT_NULL);
 	}
 	
 	/**
@@ -230,7 +249,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		if(value == null)
 			return andNotNull(fieldName);
 
-		return M(fieldName, value, AND, NOT_EQ);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.NEQ);
 	}
 	
 	/**
@@ -240,7 +259,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andNotNull(String fieldName){
-		return NULL(fieldName, AND, IS_NOT_NULL);
+		return NULL(fieldName, ConnectorEnum.AND, OperatorEnum.IS_NOT_NULL);
 	}
 	
 	/**
@@ -251,7 +270,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andGt(String fieldName, Object value){
-		return M(fieldName, value, AND, GT);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.GT);
 	}
 	
 	/**
@@ -262,7 +281,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orGt(String fieldName, Object value){
-		return M(fieldName, value, OR, GT);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.GT);
 	}
 	
 	/**
@@ -273,7 +292,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andLt(String fieldName, Object value){
-		return M(fieldName, value, AND, LT);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.LT);
 	}
 	
 	/**
@@ -284,7 +303,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orLt(String fieldName, Object value){
-		return M(fieldName, value, OR, LT);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.LT);
 	}
 	
 	/**
@@ -295,7 +314,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andLe(String fieldName, Object value){
-		return M(fieldName, value, AND, LE);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.LE);
 	}
 	
 	/**
@@ -306,7 +325,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orLe(String fieldName, Object value){
-		return M(fieldName, value, OR, LE);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.LE);
 	}
 	
 	/**
@@ -317,7 +336,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andGe(String fieldName, Object value){
-		return M(fieldName, value, AND, GE);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.GE);
 	}
 	
 	/**
@@ -328,7 +347,32 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orGe(String fieldName, Object value){
-		return M(fieldName, value, OR, GE);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.GE);
+	}
+	
+	/**
+	 * 条件拼装
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param value 其对应值
+	 * @param connector 条件（and | or）
+	 * @param op 操作符（like not like）
+	 * @return
+	 */
+	private OneTableSQLAbstract<T>  _like(String fieldName, Object value
+			, ConnectorEnum connector, OperatorEnum op){
+		if(fieldName == null)
+			return this;
+		
+		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
+		colName = (colName == null ? fieldName : colName);
+		
+		value = (value == null ? "" :  value.toString()
+				.replace("%", "\\%").replace("_", "\\_"));
+	
+		fieldItems.add(new FieldItem(connector, op, fieldName, "%" + value + "%", table));
+		
+		return this;
 	}
 	
 	/**
@@ -339,18 +383,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orLike(String fieldName, Object value){
-		if(fieldName == null)
-			return this;
-		
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
-		
-		value = (value == null ? "" :  value.toString()
-				.replace("%", "\\%").replace("_", "\\_"));
-		partSql.append("or ").append(tableName).append(".")
-			.append(colName).append(" like ? ");
-		valueList.add("%" + value + "%");
-		return this;
+		return _like(fieldName, value, ConnectorEnum.OR, OperatorEnum.LIKE);
 	}
 	
 	/**
@@ -361,17 +394,29 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andLike(String fieldName, Object value){
-		if(fieldName == null)
-			return this;
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
-		
-		value = (value == null ? "" :  value.toString()
-				.replace("%", "\\%").replace("_", "\\_"));
-		partSql.append("and ").append(tableName).append(".")
-			.append(colName).append(" like ? ");
-		valueList.add("%" + value + "%");
-		return this;
+		return _like(fieldName, value, ConnectorEnum.AND, OperatorEnum.LIKE);
+	}
+	
+	/**
+	 * 条件or not like
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public OneTableSQLAbstract<T> orNotLike(String fieldName, Object value){
+		return _like(fieldName, value, ConnectorEnum.OR, OperatorEnum.NLIKE);
+	}
+	
+	/**
+	 * 条件and not like
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public OneTableSQLAbstract<T> andNotLike(String fieldName, Object value){
+		return _like(fieldName, value, ConnectorEnum.AND, OperatorEnum.NLIKE);
 	}
 	
 	/**
@@ -380,21 +425,46 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
 	 * @param values 对应的值
 	 * @param op 操作符（in | not in）
-	 * @param condition (or | and)
+	 * @param connector (or | and)
 	 * @return
 	 */
-	private OneTableSQLAbstract<T> _in(String fieldName, String op
-			, String condition,  Object... values){
+	private OneTableSQLAbstract<T> _in(String fieldName, OperatorEnum op, 
+			ConnectorEnum connector,  Object... values){
 		if(fieldName == null || values == null || values.length == 0)
 			return this;
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 		
-		partSql.append(" ").append(condition).append(" ")
-			.append(tableName).append(".").append(colName)
-			.append(" ").append(op);
-		in(values); 
+		_deepIn(fieldName, op, connector, values);
+		
 		return this;
+	}
+
+	/**
+	 * 当in的条件长度大于998时，对其进行分组
+	 * 
+	 * @param fieldName
+	 * @param op
+	 * @param connector
+	 * @param values
+	 */
+	private void _deepIn(String fieldName, OperatorEnum op, ConnectorEnum connector, Object... values) {
+		if (values.length <= 998) {
+			fieldItems.add(new FieldItem(connector, op, fieldName, values, table));
+		} else {
+			group();
+			List<Object[]> splitValues = XLPSplitUtils.split(values, 998);
+			boolean first = true;
+			for (Object[] splitValue : splitValues) {
+				if (first) {
+					fieldItems.add(new FieldItem(connector, op, fieldName, splitValue, table));
+				} else {
+					fieldItems.add(new FieldItem(ConnectorEnum.OR, op, fieldName, splitValue, table));
+				}
+				first = false;
+			}
+			endGroup();
+		}
 	}
 	
 	/**
@@ -405,7 +475,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andIn(String fieldName, Object... values){
-		return _in(fieldName, IN, AND, values);
+		return _in(fieldName, OperatorEnum.IN, ConnectorEnum.AND, values);
 	}
 
 	/**
@@ -416,7 +486,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orIn(String fieldName, Object... values){
-		return _in(fieldName, IN, OR, values);
+		return _in(fieldName, OperatorEnum.IN, ConnectorEnum.OR, values);
 	}
 	
 	/**
@@ -427,7 +497,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orNotIn(String fieldName, Object... values){
-		return _in(fieldName, NOT_IN, OR, values);
+		return _in(fieldName, OperatorEnum.NIN, ConnectorEnum.OR, values);
 	}
 	
 	/**
@@ -438,24 +508,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andNotIn(String fieldName, Object... values){
-		return _in(fieldName, NOT_IN, AND, values);
-	}
-	
-	/**
-	 * 形成in部分SQL语句
-	 * 
-	 * @param values
-	 */
-	private void in(Object... values) {
-		int len = values.length;
-		partSql.append(LEFT_BRACKET);
-		for (int i = 0; i < len; i++) {
-			if(i != 0)
-				partSql.append(COMMA);
-			partSql.append(INTERROGATION);
-			valueList.add(values[i]);
-		}
-		partSql.append(RIGHT_BRACKET).append(" ");
+		return _in(fieldName, OperatorEnum.NIN, ConnectorEnum.AND, values);
 	}
 	
 	/**
@@ -467,7 +520,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orBetween(String fieldName, Object value1, Object value2){
-		return between(fieldName, OR, value1, value2);
+		return between(fieldName, ConnectorEnum.OR, value1, value2);
 	}
 	
 	/**
@@ -479,7 +532,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andBetween(String fieldName, Object value1, Object value2){
-		return between(fieldName, AND, value1, value2);
+		return between(fieldName, ConnectorEnum.AND, value1, value2);
 	}
 
 	/**
@@ -491,17 +544,36 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @param value2
 	 * @return
 	 */
-	private OneTableSQLAbstract<T> between(String fieldName,String condition,
+	private OneTableSQLAbstract<T> between(String fieldName, ConnectorEnum condition,
 			Object value1, Object value2) {
 		if(fieldName == null)
 			return this;
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 		
-		partSql.append(condition).append(" ").append(tableName).append(".")
-			.append(colName).append(" between ? and ?");
-		valueList.add(value1);
-		valueList.add(value2);
+		fieldItems.add(new FieldItem(condition, OperatorEnum.BETWEEN, fieldName, 
+				new Object[]{value1, value2}, table));
+		
+		return this;
+	}
+	
+	/**
+	 * 开始分组条件查询
+	 * 
+	 * @return
+	 */
+	public OneTableSQLAbstract<T> group(){
+		fieldItems.add(new FieldItem(OperatorEnum.LEFT_BRACKET, table));
+		return this;
+	}
+	
+	/**
+	 * 结束分组条件查询
+	 * 
+	 * @return
+	 */
+	public OneTableSQLAbstract<T> endGroup(){
+		fieldItems.add(new FieldItem(OperatorEnum.RIGHT_BRACKET, table));
 		return this;
 	}
 	
@@ -511,16 +583,109 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return
 	 */
 	public Object[] getValues(){
+		List<Object> valueList = new ArrayList<>();
+		for (FieldItem fieldItem : fieldItems) {
+			switch (fieldItem.getOperator()) {
+			case EQ: 
+			case NEQ:
+			case LIKE:
+			case NLIKE:
+			case GT:
+			case GE:
+			case LT:
+			case LE:
+				 valueList.add(fieldItem.getValue());
+				break;
+
+			case IN:
+			case NIN:
+			case BETWEEN:
+			case NBETWEEN:
+				 valueList.add(Arrays.asList(fieldItem.getValues())); 
+				break;
+			default:
+				break;
+			}
+		}
 		return valueList.toArray();
 	}
 	
 	/**
-	 * 把条件好的partSql装换成不带预处理参数的sql语句
+	 * 形成条件部分带预处理参数的sql语句
 	 * 
 	 * @return
 	 */
-	protected String partSqlToString(){
-		StringBuilder sb = new StringBuilder().append(partSql);
+	protected String formatterConditionSql(){
+		String tableAlias = SQLUtil.getTableAlias(table);
+		
+		StringBuilder sb = new StringBuilder();
+		//标记是否是第一个条件
+		boolean firstCondition = true;
+		//存储左括号
+		Stack<String> stack = new Stack<String>();
+		for (FieldItem fieldItem : fieldItems) {
+			switch (fieldItem.getOperator()) {
+			case LEFT_BRACKET:
+				 stack.push(fieldItem.getOperator().getOperator());
+				break;
+			case RIGHT_BRACKET:
+				sb.append(fieldItem.getOperator().getOperator());
+				firstCondition = false;
+				break;
+				
+			case EQ: 
+			case NEQ:
+			case LIKE:
+			case NLIKE:
+			case GT:
+			case GE:
+			case LT:
+			case LE:
+				fillPartSql(firstCondition, sb, fieldItem, tableAlias, stack);
+				sb.append(" ?");
+				firstCondition = false;
+				break;
+
+			case IS_NULL:
+			case IS_NOT_NULL:
+			case BETWEEN:
+			case NBETWEEN:
+				fillPartSql(firstCondition, sb, fieldItem, tableAlias, stack);
+				firstCondition = false;
+				break;
+				
+			case IN:
+			case NIN:
+				fillPartSql(firstCondition, sb, fieldItem, tableAlias, stack);
+				sb.append(SQLUtil.formatInSql(fieldItem.getValues().length)); 
+				firstCondition = false;
+				break;
+			default:
+				break;
+			}
+		}
+		return sb.toString();
+	}
+	
+	private void fillPartSql(boolean firstCondition, StringBuilder sb, FieldItem fieldItem,
+			String tableAlias, Stack<String> stack){
+		if (!firstCondition) {
+			sb.append(" ").append(fieldItem.getConnector().getConnector()).append(" ");
+		}
+		while (!stack.isEmpty()) {
+			sb.append(stack.pop());
+		}
+		sb.append(tableAlias).append(fieldItem.getFieldName()).append(" ")
+			.append(fieldItem.getOperator().getOperator());
+	}
+	
+	/**
+	 * 形成条件部分不带预处理参数的sql语句
+	 * 
+	 * @return
+	 */
+	protected String formatterConditionSourceSql(){
+		StringBuilder sb = new StringBuilder(formatterConditionSql());
 		return SQLUtil.fillWithParams(sb, getValues());
 	}
 	

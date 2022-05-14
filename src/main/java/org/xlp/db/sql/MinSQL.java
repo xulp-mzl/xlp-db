@@ -49,20 +49,41 @@ public class MinSQL<T> extends QuerySQLAbstract<T> {
 		this.minFieldName = BeanUtil.getFieldAlias(beanClass, minFieldName);
 	}
 
+	/**
+	 * 获取查询语句的前缀
+	 * @param source 是否返回预处理sql语句
+	 * 
+	 * @return
+	 */
+	private String preSql(boolean source) {
+		String tableAlias = SQLUtil.getTableAlias(getTable());
+		StringBuilder sb = new StringBuilder();
+		sb.append("select min(").append(tableAlias)
+			.append(minFieldName).append(") from ").append(getTable().getTableName())
+			.append(" ")
+			.append(tableAlias.isEmpty() ? tableAlias : tableAlias.substring(0, tableAlias.length() - 1))
+			.append(" ");
+		//拼接条件
+		String condition = source ? formatterConditionSourceSql() : formatterConditionSql();
+		if (!condition.isEmpty()) {
+			sb.append("where ").append(condition);
+		}
+		//拼接分组排序
+		sb.append(formatterGroupByAndOrderBySql());
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("形成的和查询SQL语句是：" + sb);
+		}
+		return sb.toString();
+	}
+	
 	@Override
 	public String getParamSql() {
-		String sql = "select min(" + minFieldName + ") from " + getTableName()
-				+ partSql.toString();
-		LOGGER.debug("形成的最小值查询SQL语句是：" + sql);
-		return sql;
+		return preSql(false);
 	}
 
 	@Override
 	public String getSql() {
-		String sql = "select min(" + minFieldName + ") from " + getTableName()
-				+ partSqlToString();
-		LOGGER.debug("形成的最小值查询SQL语句是：" + sql);
-		return sql;
+		return preSql(true);
 	}
 
 	@Override

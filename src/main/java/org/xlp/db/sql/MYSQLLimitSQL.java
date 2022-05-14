@@ -26,65 +26,20 @@ public class MYSQLLimitSQL<T> extends QuerySQL<T>{
 	public MYSQLLimitSQL(Class<T> beanClass, long startPos
 			,long resultCount) throws EntityException {
 		super(beanClass);
-		this.startPos = startPos;
-		this.resultCount = resultCount;
-	}
-
-	@Override
-	public String getSql() {
-		String alias = getTable().getAlias();
-		partSql.append(" limit ?,?");
-		
-		String partSql0 = partSqlToString();
-		String tableName = getTableName();
-		alias = (alias == null ? tableName + "_0" : alias);
-		
-		partSql0 = partSql0.replace(tableName+".", alias+".");
-		String sql = preSql().append(partSql0).toString();
-		LOGGER.debug("形成的查询SQL语句是：" + sql);
-		return sql;
-	}
-	
-	@Override
-	public String getParamSql() {
-		String alias = getTable().getAlias();
-		partSql.append(" limit ?,?");
-		
-		String partSql0 = partSql.toString();
-		String tableName = getTableName();
-		alias = (alias == null ? tableName + "_0" : alias);
-		
-		partSql0 = partSql0.replace(tableName+".", alias+".");
-		String sql = preSql().append(partSql0).toString();
-		LOGGER.debug("形成的查询SQL语句是：" + sql);
-		return sql;
+		setStartPos(startPos, resultCount);
 	}
 
 	public long getStartPos() {
 		return startPos;
 	}
 
-	public void setStartPos(long startPos) {
+	public void setStartPos(long startPos, long resultCount) {
 		this.startPos = startPos;
+		this.resultCount = resultCount;
+		limit(new Limit(startPos, resultCount));
 	}
 
 	public long getResultCount() {
 		return resultCount;
-	}
-
-	public void setResultCount(long resultCount) {
-		this.resultCount = resultCount;
-	}
-	
-	@Override
-	public Object[] getParams() {
-		valueList.add(startPos);
-		valueList.add(resultCount);
-		return super.getParams();
-	}
-	
-	@Override
-	public QuerySQL<T> limit(Limit limit) throws EntityException {
-		return this;
 	}
 }

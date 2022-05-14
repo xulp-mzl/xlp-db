@@ -58,6 +58,9 @@ public interface SQL {
 	//like
 	public final static String LIKE = "like";
 	
+	//not like
+	public final static String NOT_LIKE = "like";
+	
 	/**
 	 * 字段类型为string时，如果没有最大长度的限制，默认为-1
 	 */
