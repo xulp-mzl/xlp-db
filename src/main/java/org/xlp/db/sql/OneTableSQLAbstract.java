@@ -141,7 +141,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 	
-		fieldItems.add(new FieldItem(connector, op, fieldName, value, table));
+		fieldItems.add(new FieldItem(connector, op, colName, value, table));
 		
 		return this;
 	}
@@ -161,7 +161,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 		
-		fieldItems.add(new FieldItem(connector, op, fieldName, null, table));
+		fieldItems.add(new FieldItem(connector, op, colName, null, table));
 		
 		return this;
 	}
@@ -370,7 +370,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		value = (value == null ? "" :  value.toString()
 				.replace("%", "\\%").replace("_", "\\_"));
 	
-		fieldItems.add(new FieldItem(connector, op, fieldName, "%" + value + "%", table));
+		fieldItems.add(new FieldItem(connector, op, colName, "%" + value + "%", table));
 		
 		return this;
 	}
@@ -435,7 +435,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 		
-		_deepIn(fieldName, op, connector, values);
+		_deepIn(colName, op, connector, values);
 		
 		return this;
 	}
@@ -520,7 +520,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orBetween(String fieldName, Object value1, Object value2){
-		return between(fieldName, ConnectorEnum.OR, value1, value2);
+		return between(fieldName, ConnectorEnum.OR, OperatorEnum.BETWEEN, value1, value2);
 	}
 	
 	/**
@@ -532,7 +532,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andBetween(String fieldName, Object value1, Object value2){
-		return between(fieldName, ConnectorEnum.AND, value1, value2);
+		return between(fieldName, ConnectorEnum.AND, OperatorEnum.BETWEEN,value1, value2);
 	}
 
 	/**
@@ -540,21 +540,46 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	 * 
 	 * @param fieldName
 	 * @param condition
+	 * @param operator
 	 * @param value1
 	 * @param value2
 	 * @return
 	 */
 	private OneTableSQLAbstract<T> between(String fieldName, ConnectorEnum condition,
-			Object value1, Object value2) {
+			OperatorEnum operator, Object value1, Object value2) {
 		if(fieldName == null)
 			return this;
 		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
 		colName = (colName == null ? fieldName : colName);
 		
-		fieldItems.add(new FieldItem(condition, OperatorEnum.BETWEEN, fieldName, 
+		fieldItems.add(new FieldItem(condition, operator, colName, 
 				new Object[]{value1, value2}, table));
 		
 		return this;
+	}
+	
+	/**
+	 * 条件or not between
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param value1 对应的值1
+	 * @param value2 对应的值2
+	 * @return SQL对象
+	 */
+	public OneTableSQLAbstract<T> orNotBetween(String fieldName, Object value1, Object value2){
+		return between(fieldName, ConnectorEnum.OR, OperatorEnum.NBETWEEN, value1, value2);
+	}
+	
+	/**
+	 * 条件and not between
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param value1 对应的值1
+	 * @param value2 对应的值2
+	 * @return SQL对象
+	 */
+	public OneTableSQLAbstract<T> andNotBetween(String fieldName, Object value1, Object value2){
+		return between(fieldName, ConnectorEnum.AND, OperatorEnum.NBETWEEN, value1, value2);
 	}
 	
 	/**

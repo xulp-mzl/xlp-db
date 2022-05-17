@@ -1,5 +1,7 @@
 package org.xlp.db.sql.item;
 
+import java.util.Arrays;
+
 import org.xlp.db.sql.table.Table;
 
 /**
@@ -38,6 +40,11 @@ public class FieldItem {
 	 * 字段对应的表描述
 	 */
 	private Table<?> table;
+	
+	/**
+	 * 标记值是否是存储字段名称，多表查询用
+	 */
+	private boolean flagValueIsFieldName = false; 
 
 	public FieldItem() {
 	}
@@ -66,6 +73,16 @@ public class FieldItem {
 		this.fieldName = fieldName;
 		this.values = values;
 		this.table = table;
+	}
+
+	public FieldItem(ConnectorEnum connector, OperatorEnum operator, String fieldName, Object value, Table<?> table,
+			boolean flagValueIsFieldName) {
+		this.connector = connector;
+		this.operator = operator;
+		this.fieldName = fieldName;
+		this.value = value;
+		this.table = table;
+		this.flagValueIsFieldName = flagValueIsFieldName;
 	}
 
 	public ConnectorEnum getConnector() {
@@ -116,12 +133,27 @@ public class FieldItem {
 		this.table = table;
 	}
 
+	/**
+	 * @return the flagValueIsFieldName
+	 */
+	public boolean isFlagValueIsFieldName() {
+		return flagValueIsFieldName;
+	}
+
+	/**
+	 * @param flagValueIsFieldName the flagValueIsFieldName to set
+	 */
+	public void setFlagValueIsFieldName(boolean flagValueIsFieldName) {
+		this.flagValueIsFieldName = flagValueIsFieldName;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("FieldItem [connector=").append(connector).append(", operator=").append(operator)
 				.append(", fieldName=").append(fieldName).append(", value=").append(value).append(", values=")
-				.append(values).append(", table=").append(table).append("]");
+				.append(Arrays.toString(values)).append(", table=").append(table).append(", flagValueIsFieldName=")
+				.append(flagValueIsFieldName).append("]");
 		return builder.toString();
 	}
 }

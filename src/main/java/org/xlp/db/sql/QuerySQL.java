@@ -8,7 +8,6 @@ import org.xlp.db.exception.EntityException;
 import org.xlp.db.sql.limit.Limit;
 import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.key.CompoundPrimaryKey;
-import org.xlp.db.tableoption.xlpenum.DBType;
 import org.xlp.db.utils.BeanUtil;
 import org.xlp.utils.XLPStringUtil;
 
@@ -158,7 +157,7 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 		//拼接分组排序
 		sb.append(formatterGroupByAndOrderBySql());
 		
-		if (limit != null && limit.getDbType() == DBType.MYSQL_DB)
+		if (limit != null)
 			sb.append(" limit ?,?");
 
 		if (LOGGER.isDebugEnabled()) {
@@ -179,7 +178,7 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 		//拼接分组排序
 		sb.append(formatterGroupByAndOrderBySql());
 		
-		if (limit != null && limit.getDbType() == DBType.MYSQL_DB){
+		if (limit != null){
 			sb.append(" limit ").append(limit.getStartPos())
 				.append(COMMA).append(limit.getResultCount());
 		}
@@ -231,15 +230,13 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	}
 	
 	/**
-	 * 分页查询信息，暂时只支持mysql数据库
+	 * 分页查询信息，暂时只支持mysql数据库,其他数据库调用了该函数肯能会出错
 	 * 
 	 * @param limit
 	 * @return
 	 * @throws EntityException
 	 */
 	public QuerySQL<T> limit(Limit limit) throws EntityException {
-		if (limit != null && limit.getDbType() != DBType.MYSQL_DB)
-			throw new EntityException("该操作暂时自支持mysql数据库");
 		this.limit = limit;
 		return this;
 	}
@@ -247,7 +244,7 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	@Override
 	public Object[] getParams() {
 		Object[] values = super.getParams();
-		if (limit != null && limit.getDbType() == DBType.MYSQL_DB) {
+		if (limit != null) {
 			int length = values.length;
 			values = Arrays.copyOf(values, length + 2);
 			values[length] = limit.getStartPos();

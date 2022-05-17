@@ -1,10 +1,13 @@
 package org.xlp.db.sql.table;
 
-import java.util.Arrays;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.sql.SQLUtil;
 import org.xlp.db.tableoption.annotation.XLPColumn;
+import org.xlp.db.tableoption.annotation.XLPForeign;
 import org.xlp.db.tableoption.annotation.XLPId;
 import org.xlp.javabean.JavaBeanPropertiesDescriptor;
 import org.xlp.javabean.PropertyDescriptor;
@@ -26,12 +29,28 @@ public class Table<T> {
 	private String[] columnNames;//表所有所有字段数组除key对应字段外
 	
 	/**
+	 * 对应的实体类对象 
+	 */
+	private Class<T> entityClass;
+	
+	/**
+	 * 存储主键对应的字段
+	 */
+	private List<Field> primaryFields = new ArrayList<Field>();
+	
+	/**
+	 * 存储外键对应的字段
+	 */
+	private List<Field> foreignFields = new ArrayList<Field>();
+	
+	/**
 	 * 以实体类型构建此对象
 	 * 
 	 * @param entityClass
 	 * @throws EntityException 
 	 */
 	public Table(Class<T> entityClass) throws EntityException{
+		this.entityClass = entityClass;
 		initData(entityClass);
 	}
 
@@ -61,6 +80,7 @@ public class Table<T> {
 				.columnName();
 			allColumnNames[i] = XLPStringUtil.isEmpty(allColumnNames[i]) ? 
 					kPds[i].getFieldName() : allColumnNames[i];
+			primaryFields.add(kPds[i].getField());
 		}
 		
 		String colName = null;
@@ -69,6 +89,11 @@ public class Table<T> {
 			colName = XLPStringUtil.isEmpty(colName) ? pds[i].getFieldName() : colName;
 			allColumnNames[i] = colName; //初始化表所有所有字段数组（主键字段在最前）
 			columnNames[j] = colName; //表所有所有字段数组除key对应字段外
+		}
+		
+		pds = jbp.getPdsWithAnnotation(XLPForeign.class);//外键属性字段描述
+		for (PropertyDescriptor<T> pd : pds) {
+			foreignFields.add(pd.getField());
 		}
 	}
 
@@ -96,13 +121,25 @@ public class Table<T> {
 	public String getTableName() {
 		return tableName;
 	}
-
-	@Override
-	public String toString() {
-		return "Table [alias=" + alias + ", allColumnNames="
-				+ Arrays.toString(allColumnNames) + ", columnNames="
-				+ Arrays.toString(columnNames) + ", tableName=" + tableName
-				+ "]";
-	}
 	
+	/**
+	 * @return the primaryFields
+	 */
+	public List<Field> getPrimaryFields() {
+		return primaryFields;
+	}
+
+	/**
+	 * @return the foreignFields
+	 */
+	public List<Field> getForeignFields() {
+		return foreignFields;
+	}
+
+	/**
+	 * @return the entityClass
+	 */
+	public Class<T> getEntityClass() {
+		return entityClass;
+	}
 }

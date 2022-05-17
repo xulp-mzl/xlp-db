@@ -478,22 +478,6 @@ public final class DBSession{
 	}
 	
 	/**
-	 * 通过bean对象获取新的bean对象
-	 * <p>(E:Enhance 增强)
-	 * @param bean 
-	 * @return 假如bean对象属性中有别的bean对象或别的bean对象集合。
-	 * 			<p>调用这个函数都会封装，如果没有则与find(T bean)的效果相同。
-	 * @throws SQLException 假如该对象没要有相关的主属性或不是实体或数据库访问出错时，抛出该异常
-	 * @throws EntityException 
-	 */
-	public <T> T findE(T bean) throws SQLException, EntityException{
-		if(bean == null)
-			return null;
-		
-		return new EntityAttributeWrapper<T>(bean).createNewEntity();
-	}
-	
-	/**
 	 * 通过SQL对象获取dataset对象
 	 * 
 	 * @param sql

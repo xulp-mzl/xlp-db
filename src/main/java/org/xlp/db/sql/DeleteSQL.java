@@ -1,7 +1,6 @@
 package org.xlp.db.sql;
 
 import org.xlp.db.exception.EntityException;
-import org.xlp.db.tableoption.xlpenum.DBType;
 
 
 /**
@@ -43,18 +42,9 @@ public class DeleteSQL<T> extends OneTableSQLAbstract<T>{
 	 * @return
 	 */
 	private String preSql(boolean source) {
-		String tableAlias = SQLUtil.getTableAlias(getTable());
 		StringBuilder sb = new StringBuilder();
-		sb.append("delete ");
-		
-		String tableAlas1 = tableAlias.isEmpty() ? tableAlias : tableAlias.substring(0, tableAlias.length() - 1);
-		
-		if (!tableAlias.isEmpty() && DBType.MYSQL_DB == SQLUtil.getDBType()) {
-			sb.append(tableAlas1);
-		}
-		
-		sb.append(" from ").append(getTable().getTableName())
-			.append(" ").append(tableAlas1).append(" ");
+		sb.append("delete from ").append(getTable().getTableName()).append(" ");
+		setTableAlias(null);
 		//拼接条件
 		String condition = source ? formatterConditionSourceSql() : formatterConditionSql();
 		if (!condition.isEmpty()) {

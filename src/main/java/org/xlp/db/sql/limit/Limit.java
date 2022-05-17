@@ -23,13 +23,13 @@ public class Limit {
 	private static final String MYSQL = "MySQL";
 	
 	public Limit(){
-		setDbType();
+		//setDbType();
 	}
 
 	public Limit(long startPos, long resultCount) {
 		this.startPos = startPos;
 		this.resultCount = resultCount;
-		setDbType();
+		//setDbType();
 	}
 
 	public long getStartPos() {
@@ -52,7 +52,7 @@ public class Limit {
 		return dbType;
 	}
 
-	private void setDbType() {
+	protected void setDbType() {
 		String dbName = XLPDBUtil.getDatabaseProductName();
 		if (MYSQL.equalsIgnoreCase(dbName)) {
 			this.dbType = DBType.MYSQL_DB;
