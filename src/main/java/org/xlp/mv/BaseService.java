@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.page.Page;
+import org.xlp.db.sql.ComplexQuerySQL;
 import org.xlp.db.sql.CountSQL;
 import org.xlp.db.sql.QuerySQL;
 import org.xlp.db.sql.SQL;
@@ -593,5 +594,15 @@ public class BaseService implements IBaseService{
 		CountSQL<T> countSQL = new CountSQL<>(beanClass);
 		countSQL.distinctCount(fieldNames);
 		return count(countSQL);
+	}
+
+	@Override
+	public <T> T find(Class<T> beanClass, ComplexQuerySQL sql) {
+		return BASEDAO.find(beanClass, sql);
+	}
+
+	@Override
+	public <T> List<T> list(Class<T> beanClass, ComplexQuerySQL sql) {
+		return BASEDAO.list(beanClass, sql);
 	}
 }

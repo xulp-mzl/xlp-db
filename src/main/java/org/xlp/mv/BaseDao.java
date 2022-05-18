@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.xlp.db.exception.EntityException;
 import org.xlp.db.page.Page;
+import org.xlp.db.sql.ComplexQuerySQL;
 import org.xlp.db.sql.SQL;
 import org.xlp.db.tableoption.handlers.result.DataSet;
 import org.xlp.db.tableoption.simple.DBSession;
@@ -611,6 +613,24 @@ public class BaseDao implements IBaseDao{
 	public Double sum(SQL sqlObj){
 		try {
 			return SESSION.sum(sqlObj);
+		} catch (SQLException e) {
+			throw new OptionDBException(e);
+		}
+	}
+
+	@Override
+	public <T> T find(Class<T> beanClass, ComplexQuerySQL sql) {
+		try {
+			return SESSION.find(beanClass, sql);
+		} catch (SQLException e) {
+			throw new OptionDBException(e);
+		}
+	}
+
+	@Override
+	public <T> List<T> list(Class<T> beanClass, ComplexQuerySQL sql) {
+		try {
+			return SESSION.list(beanClass, sql);
 		} catch (SQLException e) {
 			throw new OptionDBException(e);
 		}

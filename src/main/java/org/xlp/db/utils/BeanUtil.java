@@ -1,6 +1,10 @@
 package org.xlp.db.utils;
 
 
+import java.lang.ref.SoftReference;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xlp.db.tableoption.annotation.XLPColumn;
@@ -11,6 +15,7 @@ import org.xlp.javabean.MethodException;
 import org.xlp.javabean.PropertyDescriptor;
 import org.xlp.javabean.convert.mapandbean.MapValueProcesser;
 import org.xlp.javabean.processer.ValueProcesser;
+import org.xlp.utils.XLPStringUtil;
 
 /**
  * bean操作工具类
@@ -25,6 +30,11 @@ import org.xlp.javabean.processer.ValueProcesser;
 public class BeanUtil {
 	// 日志记录
 	private final static Logger LOGGER = LoggerFactory.getLogger(BeanUtil.class);
+	
+	/**
+	 * 保存已记录的实体类和其对应的描述信息
+	 */
+	private static SoftReference<Map<Class<?>, PropertyDescriptor<?>[]>> softReference; 
 
 	/**
 	 * 得到实体注解
@@ -97,6 +107,13 @@ public class BeanUtil {
 		return getIsPrimaryKey(beanClass) != null;
 	}
 
+	private static synchronized void createSoftReference(){
+		if (softReference == null || softReference.get() == null) {
+			 softReference = new SoftReference<Map<Class<?>,PropertyDescriptor<?>[]>>(
+					 new HashMap<Class<?>,PropertyDescriptor<?>[]>());
+		}
+	}
+	
 	/**
 	 * 获取指定字段的别名，即所含注解描述名
 	 * 
@@ -107,8 +124,14 @@ public class BeanUtil {
 	 *             假如参数为null，则抛出该异常
 	 */
 	public static <T> String getFieldAlias(Class<T> beanClass, String fieldName) {
-		PropertyDescriptor<T>[] pds = new JavaBeanPropertiesDescriptor<T>(
-				beanClass).getPds();
+		createSoftReference();
+		Map<Class<?>,PropertyDescriptor<?>[]> map = softReference.get();
+		@SuppressWarnings("unchecked")
+		PropertyDescriptor<T>[] pds = (PropertyDescriptor<T>[]) map.get(beanClass);
+		if (pds == null) {
+			pds = new JavaBeanPropertiesDescriptor<T>(beanClass).getPds();
+			map.put(beanClass, pds);
+		}
 
 		int len = pds.length;
 		XLPColumn xlpColumn;
@@ -125,7 +148,7 @@ public class BeanUtil {
 				break;
 			}
 		}
-		return alias;
+		return XLPStringUtil.emptyToNull(alias);
 	}
 
 	/**

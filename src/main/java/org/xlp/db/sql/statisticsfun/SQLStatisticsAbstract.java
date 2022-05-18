@@ -24,7 +24,7 @@ public abstract class SQLStatisticsAbstract implements SQLStatisticsType{
 	private String alias;
 	
 	/**
-	 * 别名
+	 * 统计的字段名称
 	 */
 	private String fieldName;
 	
@@ -35,9 +35,9 @@ public abstract class SQLStatisticsAbstract implements SQLStatisticsType{
 	 * @param alias
 	 */
 	SQLStatisticsAbstract(Table<?> table, String fieldName, String alias) {
-		this.table = table;
-		this.alias = alias;
-		this.fieldName = fieldName;
+		setTable(table);
+		setAlias(alias); 
+		setFieldName(fieldName);
 	}
 
 	/**
@@ -65,7 +65,14 @@ public abstract class SQLStatisticsAbstract implements SQLStatisticsType{
 		return table;
 	}
 
+	/**
+	 * 设置表
+	 * 
+	 * @param table
+	 * @throws NullPointerException 假如参数为空，则抛出该异常
+	 */
 	public void setTable(Table<?> table) {
+		AssertUtils.isNotNull(table, "table parameter is null！");
 		this.table = table;
 	}
 
@@ -73,7 +80,14 @@ public abstract class SQLStatisticsAbstract implements SQLStatisticsType{
 		return fieldName;
 	}
 
+	/**
+	 * 设置统计字段
+	 * 
+	 * @param fieldName
+	 * @throws NullPointerException 假如参数为空，则抛出该异常
+	 */
 	public void setFieldName(String fieldName) {
+		AssertUtils.isNotNull(fieldName, "fieldName parameter is null or emppty！");
 		this.fieldName = fieldName;
 	}
 	
@@ -85,12 +99,12 @@ public abstract class SQLStatisticsAbstract implements SQLStatisticsType{
 	 * @throws NullPointerException 假如统计函数的名称参数为空，则抛出该异常
 	 */
 	protected String getStatisticsPartSql(String funcName) {
-		AssertUtils.isNotNull(funcName, "统计函数的名称参数不能为空！"); 
-		String tableAlias = SQLUtil.getTableAlias(getTable());
+		AssertUtils.isNotNull(funcName, "统计函数的名称参数不能为空！");
 		StringBuilder sb = new StringBuilder();
-		sb.append(funcName).append(SQL.LEFT_BRACKET).append(tableAlias)
-			.append(getFieldName()).append(SQL.RIGHT_BRACKET);
-		if (XLPStringUtil.isEmpty(getAlias())) {
+		sb.append(funcName).append(SQL.LEFT_BRACKET)
+			.append(SQLUtil.getColumnName(getFieldName(), table))
+			.append(SQL.RIGHT_BRACKET);
+		if (!XLPStringUtil.isEmpty(getAlias())) {
 			sb.append(" ").append(getAlias());
 		}
 		return sb.toString();

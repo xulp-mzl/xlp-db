@@ -1,5 +1,6 @@
 package org.xlp.db.sql;
 
+import org.xlp.assertion.AssertUtils;
 import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.utils.BeanUtil;
@@ -111,5 +112,29 @@ public final class SQLUtil {
 		String tableAlias = table == null ? XLPStringUtil.EMPTY : table.getAlias();
 		tableAlias = XLPStringUtil.isEmpty(tableAlias) ? XLPStringUtil.EMPTY : tableAlias + ".";
 		return tableAlias;
+	}
+	
+	/**
+	 * 获取指定字段名称对应表中的字段名称 name->表别名+'.'+表字段名， xx.name->'xx.'+表字段名
+	 * 
+	 * @param fieldName
+	 * @param table
+	 * @return
+	 * @throws NullPointerException 假如参数为空，则抛出该异常
+	 */
+	public static String getColumnName(String fieldName, Table<?> table){
+		AssertUtils.isNotNull(fieldName, "fieldName parameter is null or empty！");
+		AssertUtils.isNotNull(table, "table parameter is null！");
+		int index = fieldName.indexOf(".");
+		String pre = table.getAlias();
+		String suffix = fieldName;
+		if (index >= 0) {
+			pre = fieldName.substring(0, index + 1);
+			suffix = fieldName.substring(index + 1);
+		}
+		pre = XLPStringUtil.isEmpty(pre) ? XLPStringUtil.EMPTY : pre + ".";
+		String colName = BeanUtil.getFieldAlias(table.getEntityClass(), suffix);
+		colName = XLPStringUtil.isEmpty(colName) ? suffix : colName;
+		return pre + colName;
 	}
 }

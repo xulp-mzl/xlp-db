@@ -2,7 +2,11 @@ package org.xlp.db.sql;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +16,14 @@ import org.xlp.db.sql.item.ConnectorEnum;
 import org.xlp.db.sql.item.FieldItem;
 import org.xlp.db.sql.item.OperatorEnum;
 import org.xlp.db.sql.limit.Limit;
+import org.xlp.db.sql.statisticsfun.Avg;
+import org.xlp.db.sql.statisticsfun.DistinctCount;
+import org.xlp.db.sql.statisticsfun.Max;
+import org.xlp.db.sql.statisticsfun.Min;
 import org.xlp.db.sql.statisticsfun.SQLStatisticsType;
+import org.xlp.db.sql.statisticsfun.Sum;
 import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.annotation.XLPForeign;
-import org.xlp.db.utils.BeanUtil;
 import org.xlp.utils.XLPSplitUtils;
 
 /**
@@ -84,6 +92,26 @@ public class ComplexQuerySQL implements SQL{
 	 * limit对象暂时只支持mysql数据库
 	 */
 	private Limit limit;
+	
+	/**
+	 * 存储排序字段
+	 */
+	private Map<String, String> sortFields = new LinkedHashMap<String, String>();
+	
+	/**
+	 * 存储分组字段
+	 */
+	private Set<String> groupFields = new LinkedHashSet<String>();
+	
+	/**
+	 * 标记 having 条件开始
+	 */
+	private boolean having = false;
+	
+	/**
+	 * sql having 条件对象集合
+	 */
+	protected List<FieldItem> havingFieldItems = new ArrayList<FieldItem>();
 	
 	/**
 	 * 私有构造函数
@@ -453,24 +481,19 @@ public class ComplexQuerySQL implements SQL{
 			, ConnectorEnum connector, OperatorEnum op, boolean flagValue){
 		if(fieldName == null)
 			return this;
-		
-		String colName = getColumnName(fieldName);
-		if (flagValue) {
-			value = getColumnName((String) value);
+		if (having) {
+			if (flagValue) {
+				value = SQLUtil.getColumnName(fieldName, table);
+			}
+			havingFieldItems.add(new FieldItem(connector, op, fieldName, value, null, flagValue));
+		} else {
+			String colName = SQLUtil.getColumnName(fieldName, table);
+			if (flagValue) {
+				value = SQLUtil.getColumnName(fieldName, table);
+			}
+			fieldItems.add(new FieldItem(connector, op, colName, value, null, flagValue));
 		}
-	
-		fieldItems.add(new FieldItem(connector, op, colName, value, null, flagValue));
-		
 		return this;
-	}
-	
-	private String getColumnName(String fieldName){
-		int index = fieldName.indexOf(".");
-		String colName = index >=0 ? fieldName.substring(index + 1) : fieldName; 
-		colName = BeanUtil.getFieldAlias(table.getEntityClass(), colName);
-		colName = (colName == null ? fieldName : 
-			(index >=0 ? fieldName.substring(0, index + 1) + colName : colName));
-		return colName;
 	}
 	
 	/**
@@ -485,7 +508,7 @@ public class ComplexQuerySQL implements SQL{
 			, ConnectorEnum connector, OperatorEnum op){
 		if(fieldName == null)
 			return this;
-		String colName = getColumnName(fieldName);
+		String colName = SQLUtil.getColumnName(fieldName, table);
 		
 		fieldItems.add(new FieldItem(connector, op, colName, null, null));
 		
@@ -738,7 +761,7 @@ public class ComplexQuerySQL implements SQL{
 		if(fieldName == null)
 			return this;
 		
-		String colName = getColumnName(fieldName);
+		String colName = SQLUtil.getColumnName(fieldName, table);
 		
 		value = (value == null ? "" :  value.toString()
 				.replace("%", "\\%").replace("_", "\\_"));
@@ -805,7 +828,7 @@ public class ComplexQuerySQL implements SQL{
 			ConnectorEnum connector,  Object... values){
 		if(fieldName == null || values == null || values.length == 0)
 			return this;
-		String colName = getColumnName(fieldName);
+		String colName = SQLUtil.getColumnName(fieldName, table);
 		
 		_deepIn(colName, op, connector, values);
 		
@@ -921,7 +944,7 @@ public class ComplexQuerySQL implements SQL{
 			OperatorEnum operator, Object value1, Object value2) {
 		if(fieldName == null)
 			return this;
-		String colName = getColumnName(fieldName);
+		String colName = SQLUtil.getColumnName(fieldName, table);
 		
 		fieldItems.add(new FieldItem(condition, operator, colName, 
 				new Object[]{value1, value2}, null));
@@ -992,6 +1015,233 @@ public class ComplexQuerySQL implements SQL{
 	 */
 	public ComplexQuerySQL setDistinct(boolean distinct) {
 		this.distinct = distinct;
+		return this;
+	}
+	
+	/**
+	 * order by
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param orderType 排序方式（asc | desc）
+	 * @return
+	 */
+	private ComplexQuerySQL orderBy(String fieldName, String orderType){
+		if(fieldName == null)
+			return this;
+		String colName = SQLUtil.getColumnName(fieldName, table);
+		sortFields.put(colName, orderType);
+		return this;
+	}
+	
+	/**
+	 * 排序升序
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL asc(String fieldName){
+		return orderBy(fieldName, ASC);
+	}
+	
+	/**
+	 * 排序降序
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL desc(String fieldName){
+		return orderBy(fieldName, DESC);
+	}
+
+	/**
+	 * group by
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL groupBy(String fieldName){
+		if(fieldName == null)
+			return this;
+		String colName = SQLUtil.getColumnName(fieldName, table);
+		groupFields.add(colName);
+		return this;
+	}
+	
+	/**
+	 * max
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param alias 别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL max(String fieldName, String alias){
+		sqlStatisticsType.add(new Max(table, fieldName, alias));
+		return this;
+	}
+	
+	/**
+	 * max
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL max(String fieldName){
+		return max(fieldName, null);
+	}
+	
+	/**
+	 * min
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param alias 别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL min(String fieldName, String alias){
+		sqlStatisticsType.add(new Min(table, fieldName, alias));
+		return this;
+	}
+	
+	/**
+	 * min
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL min(String fieldName){
+		return min(fieldName, null);
+	}
+	
+	/**
+	 * sum
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param alias 别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL sum(String fieldName, String alias){
+		sqlStatisticsType.add(new Sum(table, fieldName, alias));
+		return this;
+	}
+	
+	/**
+	 * sum
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL sum(String fieldName){
+		return sum(fieldName, null);
+	}
+	
+	/**
+	 * avg
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param alias 别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL avg(String fieldName, String alias){
+		sqlStatisticsType.add(new Avg(table, fieldName, alias));
+		return this;
+	}
+	
+	/**
+	 * avg
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL avg(String fieldName){
+		return avg(fieldName, null);
+	}
+	
+	/**
+	 * count(fieldName)
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param alias 别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL count(String fieldName, String alias){
+		sqlStatisticsType.add(new DistinctCount(table, fieldName, alias));
+		return this;
+	}
+	
+	/**
+	 * count(fieldName)
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL count(String fieldName){
+		return count(fieldName, null);
+	}
+	
+	/**
+	 * count(*)
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param alias 别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL countAll(String alias){
+		DistinctCount distinctCount = new DistinctCount();
+		distinctCount.setTable(table);
+		distinctCount.setAlias(alias);
+		sqlStatisticsType.add(distinctCount);
+		return this;
+	}
+	
+	/**
+	 * count(*)
+	 * 
+	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL count(){
+		return countAll(null);
+	}
+	
+	/**
+	 * count(distinctCount xx, yyy)
+	 * 
+	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param alias 别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL distinctCount(String alias, String... fieldNames){
+		DistinctCount distinctCount = new DistinctCount(table, fieldNames, alias);
+		sqlStatisticsType.add(distinctCount);
+		return this;
+	}
+	
+	/**
+	 * count(distinctCount xx, yyy)
+	 * 
+	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL distinctCount(String... fieldNames){
+		return distinctCount(null, fieldNames);
+	}
+	
+	/**
+	 * 开始分组条件查询
+	 * 
+	 * @return
+	 */
+	public ComplexQuerySQL having(){
+		this.having = true;
+		return this;
+	}
+	
+	/**
+	 * 结束分组条件查询
+	 * 
+	 * @return
+	 */
+	public ComplexQuerySQL endHaving(){
+		this.having = false;
 		return this;
 	}
 }

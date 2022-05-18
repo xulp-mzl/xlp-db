@@ -8,9 +8,11 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xlp.assertion.AssertUtils;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.page.Page;
 import org.xlp.db.sql.AvgSQL;
+import org.xlp.db.sql.ComplexQuerySQL;
 import org.xlp.db.sql.CountSQL;
 import org.xlp.db.sql.DeleteSQL;
 import org.xlp.db.sql.InsertSQL;
@@ -762,5 +764,51 @@ public final class DBSession{
 	 */
 	public Double sum(SQL sqlObj) throws SQLException{
 		return max(sqlObj);
+	}
+	
+	/**
+	 * 获取对象
+	 * 
+	 * @param beanClass
+	 * @param complexQuerySQL
+	 * @return 
+	 * @throws SQLException 假如数据库访问出错时，抛出该异常
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
+	 * @throws NullPointerException
+	 *             假如参数为null，抛出该异常
+	 */
+	public <T> T find(Class<T> beanClass, ComplexQuerySQL complexQuerySQL) 
+			throws SQLException{
+		AssertUtils.isNotNull(complexQuerySQL, "complexQuerySQL parameter is null!");
+		String sql = complexQuerySQL.getParamSql();
+		@SuppressWarnings("unchecked")
+		Class<T> entityClass = beanClass == null 
+			? (Class<T>) complexQuerySQL.getEntityClass() : beanClass;
+		return Constants.BASE_DB_OPTION.query(sql, 
+				new DefaultBeanHandle<T>(entityClass), complexQuerySQL.getParams());
+	}
+	
+	/**
+	 * 获取对象集合
+	 * 
+	 * @param beanClass
+	 * @param complexQuerySQL
+	 * @return 
+	 * @throws SQLException 假如数据库访问出错时，抛出该异常
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
+	 * @throws NullPointerException
+	 *             假如参数为null，抛出该异常
+	 */
+	public <T> List<T> list(Class<T> beanClass, ComplexQuerySQL complexQuerySQL) 
+			throws SQLException{
+		AssertUtils.isNotNull(complexQuerySQL, "complexQuerySQL parameter is null!");
+		String sql = complexQuerySQL.getParamSql();
+		@SuppressWarnings("unchecked")
+		Class<T> entityClass = beanClass == null 
+			? (Class<T>) complexQuerySQL.getEntityClass() : beanClass;
+		return Constants.BASE_DB_OPTION.query(sql, 
+				new DefaultBeanListHandle<T>(entityClass), complexQuerySQL.getParams());
 	}
 }

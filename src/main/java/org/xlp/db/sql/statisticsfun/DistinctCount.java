@@ -52,9 +52,16 @@ public class DistinctCount extends SQLStatisticsAbstract{
 				sb.append(tableAlias).append(distinctFields[i]);
 			}
 			sb.append(SQL.RIGHT_BRACKET);
+			if (!XLPStringUtil.isEmpty(getAlias())) {
+				sb.append(" ").append(getAlias());
+			}
 			return sb.toString();
 		} else if (XLPStringUtil.isEmpty(getFieldName())) {
-			return "count(*)";
+			String countSql = "count(*) ";
+			if (!XLPStringUtil.isEmpty(getAlias())) {
+				countSql += getAlias();
+			}
+			return countSql;
 		} else {
 			return getStatisticsPartSql("count");
 		}

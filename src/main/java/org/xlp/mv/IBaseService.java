@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.page.Page;
+import org.xlp.db.sql.ComplexQuerySQL;
 import org.xlp.db.sql.SQL;
 import org.xlp.db.sql.limit.Limit;
 import org.xlp.db.tableoption.handlers.result.DataSet;
@@ -539,4 +540,30 @@ public interface IBaseService {
 	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
 	 */
 	public <T> long distinctCount(Class<T> beanClass, String... fieldNames);
+	
+	/**
+	 * 获取对象
+	 * 
+	 * @param beanClass
+	 * @param sql
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
+	 * @throws NullPointerException
+	 *             假如参数为null，抛出该异常
+	 * @return 
+	 */
+	public <T> T find(Class<T> beanClass, ComplexQuerySQL sql);
+	
+	/**
+	 * 获取对象集合
+	 * 
+	 * @param beanClass
+	 * @param sql
+	 * @throws EntityException OptionDBException 
+	 *             假如该对象不是实体或数据库访问出错时，抛出该异常
+	 * @throws NullPointerException
+	 *             假如参数为null，抛出该异常
+	 * @return 
+	 */
+	public <T> List<T> list(Class<T> beanClass, ComplexQuerySQL sql);
 }
