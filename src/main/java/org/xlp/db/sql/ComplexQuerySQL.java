@@ -1409,23 +1409,31 @@ public class ComplexQuerySQL implements SQL{
 	 */
 	public SQL countSql(){
 		ComplexQuerySQL topComplexQuerySQL = getTopComplexQuerySQL();
-		topComplexQuerySQL.exeCount = true;
 		SQL sql = new SQL() {
-			private SQL sql = topComplexQuerySQL;
+			private ComplexQuerySQL sql = topComplexQuerySQL;
 			
 			@Override
 			public String getSql() {
-				return sql.getSql();
+				sql.exeCount = true;
+				String sqlStr = sql.getSql();
+				sql.exeCount = false;
+				return sqlStr;
 			}
 			
 			@Override
 			public Object[] getParams() {
-				return sql.getParams();
+				sql.exeCount = true;
+				Object[] params = sql.getParams();
+				sql.exeCount = false;
+				return params;
 			}
 			
 			@Override
 			public String getParamSql() {
-				return sql.getParamSql();
+				sql.exeCount = true;
+				String sqlStr = sql.getParamSql();
+				sql.exeCount = false;
+				return sqlStr;
 			}
 			
 			@Override
