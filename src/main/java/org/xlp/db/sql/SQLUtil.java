@@ -133,7 +133,7 @@ public final class SQLUtil {
 			pre = fieldName.substring(0, index + 1);
 			suffix = fieldName.substring(index + 1);
 		}
-		pre = XLPStringUtil.isEmpty(pre) ? XLPStringUtil.EMPTY : pre + ".";
+		pre = XLPStringUtil.isEmpty(pre) ? XLPStringUtil.EMPTY : pre;
 		String colName = BeanUtil.getFieldAlias(table.getEntityClass(), suffix);
 		//去掉空白字符suffix.replaceAll("\\s", XLPStringUtil.EMPTY)
 		//去掉非法字符
