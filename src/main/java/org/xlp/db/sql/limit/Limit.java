@@ -13,19 +13,29 @@ import org.xlp.db.utils.XLPDBUtil;
  * @version 1.0
  */
 public class Limit {
-	//分页开始位置
+	/**
+	 * 分页起始位置，从0开始
+	 */
 	private long startPos;
-	//记录条数
+	/**
+	 * 每页数量
+	 */
 	private long resultCount;
 	//数据库类型
 	private DBType dbType;
 	//数据库名称
 	private static final String MYSQL = "MySQL";
 	
-	public Limit(){
+	protected Limit(){
 		//setDbType();
 	}
 
+	/**
+	 * 构造函数
+	 * 
+	 * @param startPos 分页起始位置，从0开始
+	 * @param resultCount 每页数量
+	 */
 	public Limit(long startPos, long resultCount) {
 		this.startPos = startPos;
 		this.resultCount = resultCount;
