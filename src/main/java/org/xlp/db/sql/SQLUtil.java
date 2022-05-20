@@ -130,10 +130,10 @@ public final class SQLUtil {
 		String pre = defaultAddTableAlias ? table.getAlias() : XLPStringUtil.EMPTY;
 		String suffix = fieldName;
 		if (index >= 0) {
-			pre = fieldName.substring(0, index + 1);
+			pre = fieldName.substring(0, index);
 			suffix = fieldName.substring(index + 1);
 		}
-		pre = XLPStringUtil.isEmpty(pre) ? XLPStringUtil.EMPTY : pre;
+		pre = XLPStringUtil.isEmpty(pre) ? XLPStringUtil.EMPTY : pre + ".";
 		String colName = BeanUtil.getFieldAlias(table.getEntityClass(), suffix);
 		//去掉空白字符suffix.replaceAll("\\s", XLPStringUtil.EMPTY)
 		//去掉非法字符
