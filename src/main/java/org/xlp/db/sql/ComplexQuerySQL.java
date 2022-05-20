@@ -2,6 +2,7 @@ package org.xlp.db.sql;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -12,8 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xlp.assertion.AssertUtils;
 import org.xlp.db.exception.EntityException;
+import org.xlp.db.sql.item.ComplexQueryFieldItem;
+import org.xlp.db.sql.item.ComplexQueryFieldItem.ValueType;
 import org.xlp.db.sql.item.ConnectorEnum;
-import org.xlp.db.sql.item.FieldItem;
 import org.xlp.db.sql.item.OperatorEnum;
 import org.xlp.db.sql.limit.Limit;
 import org.xlp.db.sql.statisticsfun.Avg;
@@ -24,7 +26,9 @@ import org.xlp.db.sql.statisticsfun.SQLStatisticsType;
 import org.xlp.db.sql.statisticsfun.Sum;
 import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.annotation.XLPForeign;
+import org.xlp.utils.XLPArrayUtil;
 import org.xlp.utils.XLPSplitUtils;
+import org.xlp.utils.XLPStringUtil;
 
 /**
  * <p>创建时间：2022年5月15日 下午7:52:43</p>
@@ -49,6 +53,11 @@ public class ComplexQuerySQL implements SQL{
 	private ComplexQuerySQL preComplexQuerySQL;
 	
 	/**
+	 * 最顶层ComplexQuerySQL查询对象
+	 */
+	private ComplexQuerySQL topComplexQuerySQL;
+	
+	/**
 	 * 子ComplexQuerySQL查询对象
 	 */
 	private List<ComplexQuerySQL> childrenComplexQuerySQL = new ArrayList<ComplexQuerySQL>();
@@ -59,9 +68,19 @@ public class ComplexQuerySQL implements SQL{
 	private List<SQLStatisticsType> sqlStatisticsType = new ArrayList<SQLStatisticsType>();
 	
 	/**
-	 * 需要查询出的字段名称
+	 * 查询出的字段key名称
 	 */
-	private List<String> queryFields = new ArrayList<String>();
+	public static final String QUERY_FIELD_NAME_KEY = "name";
+	
+	/**
+	 * 查询出的字段别名key名称
+	 */
+	public static final String QUERY_FIELD_ALIAS_KEY = "alias";
+	
+	/**
+	 * 需要查询出的字段名称[{name:xxx, alias:xxx}]
+	 */
+	private List<Map<String, String>> queryFields = new ArrayList<Map<String, String>>();
 	
 	/**
 	 * 表连接方式
@@ -71,7 +90,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * sql条件对象集合
 	 */
-	protected List<FieldItem> fieldItems = new ArrayList<FieldItem>();
+	protected List<ComplexQueryFieldItem> fieldItems = new ArrayList<ComplexQueryFieldItem>();
 	
 	/**
 	 * 存储主键对应的字段
@@ -111,7 +130,12 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * sql having 条件对象集合
 	 */
-	protected List<FieldItem> havingFieldItems = new ArrayList<FieldItem>();
+	protected List<ComplexQueryFieldItem> havingFieldItems = new ArrayList<ComplexQueryFieldItem>();
+	
+	/**
+	 * 标记是否是执行count语句
+	 */
+	private boolean exeCount = false;
 	
 	/**
 	 * 私有构造函数
@@ -402,11 +426,11 @@ public class ComplexQuerySQL implements SQL{
 	}
 
 	public List<SQLStatisticsType> getSqlStatisticsType() {
-		return sqlStatisticsType;
+		return getTopComplexQuerySQL().sqlStatisticsType;
 	}
 
-	public List<String> getQueryFields() {
-		return queryFields;
+	public List<Map<String, String>> getQueryFields() {
+		return getTopComplexQuerySQL().queryFields;
 	}
 
 	public JoinType getJoinType() {
@@ -419,32 +443,42 @@ public class ComplexQuerySQL implements SQL{
 
 	@Override
 	public String getSql() {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder sb = new StringBuilder(getParamSql());
+		return SQLUtil.fillWithParams(sb, getParams());
 	}
 
 	@Override
 	public String getParamSql() {
-		// TODO Auto-generated method stub
-		return null;
+		return SQLPartUtil.formatTablePartSql(this);
 	}
 
 	@Override
 	public Object[] getParams() {
-		// TODO Auto-generated method stub
-		return null;
+		return SQLParamUtil.getSqlParams(this);
 	}
 
 	@Override
 	public Class<?> getEntityClass() {
-		ComplexQuerySQL preComplexQuerySQL = this.getPreComplexQuerySQL();
-		ComplexQuerySQL complexQuerySQL = this;
-		while (preComplexQuerySQL != null) {
-			complexQuerySQL = preComplexQuerySQL;
-			preComplexQuerySQL = preComplexQuerySQL.getPreComplexQuerySQL();
-		}
+		ComplexQuerySQL complexQuerySQL = getTopComplexQuerySQL();
 		//获取最顶层实体类
 		return complexQuerySQL.getEntityClass();
+	}
+	
+	/**
+	 * 获取最顶层查询对象
+	 * @return
+	 */
+	public ComplexQuerySQL getTopComplexQuerySQL(){
+		if (topComplexQuerySQL == null) {
+			ComplexQuerySQL preComplexQuerySQL = this.getPreComplexQuerySQL();
+			ComplexQuerySQL complexQuerySQL = this;
+			while (preComplexQuerySQL != null) {
+				complexQuerySQL = preComplexQuerySQL;
+				preComplexQuerySQL = preComplexQuerySQL.getPreComplexQuerySQL();
+			}
+			topComplexQuerySQL = complexQuerySQL;
+		}
+		return topComplexQuerySQL;
 	}
 
 	/**
@@ -453,7 +487,7 @@ public class ComplexQuerySQL implements SQL{
 	 * @return
 	 */
 	public ComplexQuerySQL group(){
-		fieldItems.add(new FieldItem(OperatorEnum.LEFT_BRACKET, null));
+		fieldItems.add(new ComplexQueryFieldItem(OperatorEnum.LEFT_BRACKET, null));
 		return this;
 	}
 	
@@ -463,7 +497,7 @@ public class ComplexQuerySQL implements SQL{
 	 * @return
 	 */
 	public ComplexQuerySQL endGroup(){
-		fieldItems.add(new FieldItem(OperatorEnum.RIGHT_BRACKET, null));
+		fieldItems.add(new ComplexQueryFieldItem(OperatorEnum.RIGHT_BRACKET, null));
 		return this;
 	}
 	
@@ -481,17 +515,22 @@ public class ComplexQuerySQL implements SQL{
 			, ConnectorEnum connector, OperatorEnum op, boolean flagValue){
 		if(fieldName == null)
 			return this;
-		if (having) {
+		
+		if (getTopComplexQuerySQL().having) {
+			String colName = SQLUtil.getColumnName(fieldName, table, false);
 			if (flagValue) {
-				value = SQLUtil.getColumnName(fieldName, table);
+				value = SQLUtil.getColumnName(fieldName, table, false);
 			}
-			havingFieldItems.add(new FieldItem(connector, op, fieldName, value, null, flagValue));
+			getTopComplexQuerySQL().havingFieldItems
+				.add(new ComplexQueryFieldItem(connector, op, colName, value, null,
+						flagValue ? ValueType.FIELD : ValueType.VALUE));
 		} else {
 			String colName = SQLUtil.getColumnName(fieldName, table);
 			if (flagValue) {
 				value = SQLUtil.getColumnName(fieldName, table);
 			}
-			fieldItems.add(new FieldItem(connector, op, colName, value, null, flagValue));
+			fieldItems.add(new ComplexQueryFieldItem(connector, op, colName, value, null, 
+					flagValue ? ValueType.FIELD : ValueType.VALUE));
 		}
 		return this;
 	}
@@ -510,7 +549,7 @@ public class ComplexQuerySQL implements SQL{
 			return this;
 		String colName = SQLUtil.getColumnName(fieldName, table);
 		
-		fieldItems.add(new FieldItem(connector, op, colName, null, null));
+		fieldItems.add(new ComplexQueryFieldItem(connector, op, colName, null, null));
 		
 		return this;
 	}
@@ -766,7 +805,7 @@ public class ComplexQuerySQL implements SQL{
 		value = (value == null ? "" :  value.toString()
 				.replace("%", "\\%").replace("_", "\\_"));
 	
-		fieldItems.add(new FieldItem(connector, op, colName, "%" + value + "%", null, false));
+		fieldItems.add(new ComplexQueryFieldItem(connector, op, colName, "%" + value + "%", null));
 		
 		return this;
 	}
@@ -845,16 +884,16 @@ public class ComplexQuerySQL implements SQL{
 	 */
 	private void _deepIn(String fieldName, OperatorEnum op, ConnectorEnum connector, Object... values) {
 		if (values.length <= 998) {
-			fieldItems.add(new FieldItem(connector, op, fieldName, values, null));
+			fieldItems.add(new ComplexQueryFieldItem(connector, op, fieldName, values, null));
 		} else {
 			group();
 			List<Object[]> splitValues = XLPSplitUtils.split(values, 998);
 			boolean first = true;
 			for (Object[] splitValue : splitValues) {
 				if (first) {
-					fieldItems.add(new FieldItem(connector, op, fieldName, splitValue, null));
+					fieldItems.add(new ComplexQueryFieldItem(connector, op, fieldName, splitValue, null));
 				} else {
-					fieldItems.add(new FieldItem(ConnectorEnum.OR, op, fieldName, splitValue, null));
+					fieldItems.add(new ComplexQueryFieldItem(ConnectorEnum.OR, op, fieldName, splitValue, null));
 				}
 				first = false;
 			}
@@ -946,7 +985,7 @@ public class ComplexQuerySQL implements SQL{
 			return this;
 		String colName = SQLUtil.getColumnName(fieldName, table);
 		
-		fieldItems.add(new FieldItem(condition, operator, colName, 
+		fieldItems.add(new ComplexQueryFieldItem(condition, operator, colName, 
 				new Object[]{value1, value2}, null));
 		
 		return this;
@@ -976,7 +1015,7 @@ public class ComplexQuerySQL implements SQL{
 		return between(fieldName, ConnectorEnum.AND, OperatorEnum.NBETWEEN, value1, value2);
 	}
 
-	public List<FieldItem> getFieldItems() {
+	public List<ComplexQueryFieldItem> getFieldItems() {
 		return fieldItems;
 	}
 
@@ -992,14 +1031,19 @@ public class ComplexQuerySQL implements SQL{
 	 * @return the limit
 	 */
 	public Limit getLimit() {
-		return limit;
+		return getTopComplexQuerySQL().limit;
 	}
 
 	/**
 	 * @param limit the limit to set
 	 */
-	public ComplexQuerySQL setLimit(Limit limit) {
-		this.limit = limit;
+	public ComplexQuerySQL limit(Limit limit) {
+		ComplexQuerySQL topComplexQuerySQL = getTopComplexQuerySQL();
+		Limit tempLimit = topComplexQuerySQL.getLimit();
+		if (tempLimit != null && LOGGER.isWarnEnabled()) {
+			LOGGER.warn("不能重复执行limit函数！");
+		}
+		topComplexQuerySQL.limit = limit;
 		return this;
 	}
 
@@ -1007,63 +1051,69 @@ public class ComplexQuerySQL implements SQL{
 	 * @return the distinct
 	 */
 	public boolean isDistinct() {
-		return distinct;
+		return getTopComplexQuerySQL().distinct;
 	}
 	
 	/**
 	 * @param distinct the distinct to set
 	 */
-	public ComplexQuerySQL setDistinct(boolean distinct) {
-		this.distinct = distinct;
+	public ComplexQuerySQL distinct(boolean distinct) {
+		getTopComplexQuerySQL().distinct = distinct;
 		return this;
 	}
 	
 	/**
 	 * order by
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
 	 * @param orderType 排序方式（asc | desc）
 	 * @return
 	 */
-	private ComplexQuerySQL orderBy(String fieldName, String orderType){
-		if(fieldName == null)
-			return this;
-		String colName = SQLUtil.getColumnName(fieldName, table);
-		sortFields.put(colName, orderType);
+	private ComplexQuerySQL orderBy(String orderType, String... fieldNames){
+		if(!XLPArrayUtil.isEmpty(fieldNames)){
+			String colName;
+			for (String name : fieldNames) {
+				colName = SQLUtil.getColumnName(name, table, false); 
+				getTopComplexQuerySQL().sortFields.put(colName, orderType);
+			}
+		}
 		return this;
 	}
 	
 	/**
 	 * 排序升序
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
 	 * @return SQL对象
 	 */
-	public ComplexQuerySQL asc(String fieldName){
-		return orderBy(fieldName, ASC);
+	public ComplexQuerySQL asc(String... fieldNames){
+		return orderBy(ASC, fieldNames);
 	}
 	
 	/**
 	 * 排序降序
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
 	 * @return SQL对象
 	 */
-	public ComplexQuerySQL desc(String fieldName){
-		return orderBy(fieldName, DESC);
+	public ComplexQuerySQL desc(String... fieldNames){
+		return orderBy(DESC, fieldNames);
 	}
 
 	/**
 	 * group by
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
 	 * @return SQL对象
 	 */
-	public ComplexQuerySQL groupBy(String fieldName){
-		if(fieldName == null)
-			return this;
-		String colName = SQLUtil.getColumnName(fieldName, table);
-		groupFields.add(colName);
+	public ComplexQuerySQL groupBy(String... fieldNames){
+		if(!XLPArrayUtil.isEmpty(fieldNames)){
+			String colName;
+			for (String name : fieldNames) {
+				colName = SQLUtil.getColumnName(name, table); 
+				getTopComplexQuerySQL().groupFields.add(colName);
+			}
+		}
 		return this;
 	}
 	
@@ -1075,7 +1125,7 @@ public class ComplexQuerySQL implements SQL{
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL max(String fieldName, String alias){
-		sqlStatisticsType.add(new Max(table, fieldName, alias));
+		getTopComplexQuerySQL().sqlStatisticsType.add(new Max(table, fieldName, alias));
 		return this;
 	}
 	
@@ -1097,7 +1147,7 @@ public class ComplexQuerySQL implements SQL{
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL min(String fieldName, String alias){
-		sqlStatisticsType.add(new Min(table, fieldName, alias));
+		getTopComplexQuerySQL().sqlStatisticsType.add(new Min(table, fieldName, alias));
 		return this;
 	}
 	
@@ -1119,7 +1169,7 @@ public class ComplexQuerySQL implements SQL{
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL sum(String fieldName, String alias){
-		sqlStatisticsType.add(new Sum(table, fieldName, alias));
+		getTopComplexQuerySQL().sqlStatisticsType.add(new Sum(table, fieldName, alias));
 		return this;
 	}
 	
@@ -1141,7 +1191,7 @@ public class ComplexQuerySQL implements SQL{
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL avg(String fieldName, String alias){
-		sqlStatisticsType.add(new Avg(table, fieldName, alias));
+		getTopComplexQuerySQL().sqlStatisticsType.add(new Avg(table, fieldName, alias));
 		return this;
 	}
 	
@@ -1163,7 +1213,7 @@ public class ComplexQuerySQL implements SQL{
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL count(String fieldName, String alias){
-		sqlStatisticsType.add(new DistinctCount(table, fieldName, alias));
+		getTopComplexQuerySQL().sqlStatisticsType.add(new DistinctCount(table, fieldName, alias));
 		return this;
 	}
 	
@@ -1188,7 +1238,7 @@ public class ComplexQuerySQL implements SQL{
 		DistinctCount distinctCount = new DistinctCount();
 		distinctCount.setTable(table);
 		distinctCount.setAlias(alias);
-		sqlStatisticsType.add(distinctCount);
+		getTopComplexQuerySQL().sqlStatisticsType.add(distinctCount);
 		return this;
 	}
 	
@@ -1211,7 +1261,7 @@ public class ComplexQuerySQL implements SQL{
 	 */
 	public ComplexQuerySQL distinctCount(String alias, String... fieldNames){
 		DistinctCount distinctCount = new DistinctCount(table, fieldNames, alias);
-		sqlStatisticsType.add(distinctCount);
+		getTopComplexQuerySQL().sqlStatisticsType.add(distinctCount);
 		return this;
 	}
 	
@@ -1231,7 +1281,7 @@ public class ComplexQuerySQL implements SQL{
 	 * @return
 	 */
 	public ComplexQuerySQL having(){
-		this.having = true;
+		getTopComplexQuerySQL().having = true;
 		return this;
 	}
 	
@@ -1241,7 +1291,149 @@ public class ComplexQuerySQL implements SQL{
 	 * @return
 	 */
 	public ComplexQuerySQL endHaving(){
-		this.having = false;
+		getTopComplexQuerySQL().having = false;
 		return this;
+	}
+	
+	/**
+	 * 设置要查询出的字段名称，多个字段可连续调用
+	 * 
+	 * @param fieldName 字段名称 也可以是数据库中表的列名，但最好是bean字段名, 也可以是固定值
+	 * @param alias 字段对应的别名
+	 * @return
+	 */
+	public ComplexQuerySQL properties(String fieldName, String alias){
+		if (!XLPStringUtil.isEmpty(fieldName)) {
+			String colName = SQLUtil.getColumnName(fieldName, table, false);
+			Map<String, String> map = new HashMap<String, String>(2);
+			map.put(QUERY_FIELD_ALIAS_KEY, alias);
+			map.put(QUERY_FIELD_NAME_KEY, colName);
+			getTopComplexQuerySQL().queryFields.add(map);
+		}
+		return this;
+	}
+	
+	/**
+	 * 设置要查询出的字段名称，多个字段可连续调用
+	 * 
+	 * @param fieldName 字段名称 也可以是数据库中表的列名，但最好是bean字段名, 也可以是固定值
+	 * @return
+	 */
+	public ComplexQuerySQL properties(String fieldName){
+		return properties(fieldName, null);
+	}
+	
+	/**
+	 * exists语句
+	 * 
+	 * @param sql
+	 * @return
+	 */
+	private ComplexQuerySQL exists(SQL sql, ConnectorEnum connector,
+			OperatorEnum operator){
+		fieldItems.add(new ComplexQueryFieldItem(connector, operator, ValueType.SQL, sql, null));
+		return this;
+	}
+	
+	/**
+	 * and exists
+	 * 
+	 * @param sql
+	 * @throws NullPointerException 假如第参数为null，则抛出该异常
+	 * @return
+	 */
+	public ComplexQuerySQL andExists(SQL sql){
+		AssertUtils.isNotNull(sql, "sql parameter is null!");
+		return exists(sql, ConnectorEnum.AND, OperatorEnum.EXISTS);
+	}
+	
+	/**
+	 * or exists
+	 * 
+	 * @param sql
+	 * @throws NullPointerException 假如第参数为null，则抛出该异常
+	 * @return
+	 */
+	public ComplexQuerySQL orExists(SQL sql){
+		AssertUtils.isNotNull(sql, "sql parameter is null!");
+		return exists(sql, ConnectorEnum.OR, OperatorEnum.EXISTS);
+	}
+	
+	/**
+	 * and not exists
+	 * 
+	 * @param sql
+	 * @throws NullPointerException 假如第参数为null，则抛出该异常
+	 * @return
+	 */
+	public ComplexQuerySQL andNotExists(SQL sql){
+		AssertUtils.isNotNull(sql, "sql parameter is null!");
+		return exists(sql, ConnectorEnum.AND, OperatorEnum.NOT_EXISTS);
+	}
+	
+	/**
+	 * or not exists语句
+	 * 
+	 * @param sql
+	 * @throws NullPointerException 假如第参数为null，则抛出该异常
+	 * @return
+	 */
+	public ComplexQuerySQL orNotExists(SQL sql){
+		AssertUtils.isNotNull(sql, "sql parameter is null!");
+		return exists(sql, ConnectorEnum.OR, OperatorEnum.NOT_EXISTS);
+	}
+
+	public List<ComplexQueryFieldItem> getHavingFieldItems() {
+		return havingFieldItems;
+	}
+
+	/**
+	 * @return 是否统计数据条数
+	 */
+	public boolean isExeCount() {
+		return exeCount;
+	}
+	
+	public Map<String, String> getSortFields() {
+		return sortFields;
+	}
+
+	public Set<String> getGroupFields() {
+		return groupFields;
+	}
+
+	/**
+	 * 获取统计SQL对象
+	 * 
+	 * @return
+	 */
+	public SQL countSql(){
+		ComplexQuerySQL topComplexQuerySQL = getTopComplexQuerySQL();
+		topComplexQuerySQL.exeCount = true;
+		SQL sql = new SQL() {
+			private SQL sql = topComplexQuerySQL;
+			
+			@Override
+			public String getSql() {
+				return sql.getSql();
+			}
+			
+			@Override
+			public Object[] getParams() {
+				return sql.getParams();
+			}
+			
+			@Override
+			public String getParamSql() {
+				return sql.getParamSql();
+			}
+			
+			@Override
+			public Class<?> getEntityClass() {
+				return sql.getEntityClass();
+			}
+		};
+		topComplexQuerySQL.exeCount = false;
+		return sql;
 	}
 }

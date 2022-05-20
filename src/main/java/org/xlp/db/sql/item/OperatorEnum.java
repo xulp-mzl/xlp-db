@@ -21,7 +21,9 @@ public enum OperatorEnum {
 	BETWEEN("between ? and ?"),
 	NBETWEEN("not between ? and ?"),
 	LEFT_BRACKET("("),
-	RIGHT_BRACKET(")");
+	RIGHT_BRACKET(")"),
+	NOT_EXISTS("not exists"),
+	EXISTS("exists");
 	
 	/**
 	 * 连接符

@@ -118,15 +118,16 @@ public final class SQLUtil {
 	 * 获取指定字段名称对应表中的字段名称 name->表别名+'.'+表字段名， xx.name->'xx.'+表字段名
 	 * 
 	 * @param fieldName
-	 * @param table
+	 * @param table 
+	 * @param defaultAddTableAlias 是否加上表的别名做前缀
 	 * @return
 	 * @throws NullPointerException 假如参数为空，则抛出该异常
 	 */
-	public static String getColumnName(String fieldName, Table<?> table){
+	public static String getColumnName(String fieldName, Table<?> table, boolean defaultAddTableAlias){
 		AssertUtils.isNotNull(fieldName, "fieldName parameter is null or empty！");
 		AssertUtils.isNotNull(table, "table parameter is null！");
 		int index = fieldName.indexOf(".");
-		String pre = table.getAlias();
+		String pre = defaultAddTableAlias ? table.getAlias() : XLPStringUtil.EMPTY;
 		String suffix = fieldName;
 		if (index >= 0) {
 			pre = fieldName.substring(0, index + 1);
@@ -134,7 +135,26 @@ public final class SQLUtil {
 		}
 		pre = XLPStringUtil.isEmpty(pre) ? XLPStringUtil.EMPTY : pre + ".";
 		String colName = BeanUtil.getFieldAlias(table.getEntityClass(), suffix);
-		colName = XLPStringUtil.isEmpty(colName) ? suffix : colName;
+		//去掉空白字符suffix.replaceAll("\\s", XLPStringUtil.EMPTY)
+		//去掉非法字符
+		colName = XLPStringUtil.isEmpty(colName) 
+				? suffix.replaceAll("\\s", XLPStringUtil.EMPTY)
+						.replace("'", XLPStringUtil.EMPTY)
+						.replace("--", XLPStringUtil.EMPTY)
+						.replace("\\", XLPStringUtil.EMPTY)
+				: colName;
 		return pre + colName;
+	}
+	
+	/**
+	 * 获取指定字段名称对应表中的字段名称 name->表字段名， xx.name->'xx.'+表字段名
+	 * 
+	 * @param fieldName
+	 * @param table 
+	 * @return
+	 * @throws NullPointerException 假如参数为空，则抛出该异常
+	 */
+	public static String getColumnName(String fieldName, Table<?> table){
+		return getColumnName(fieldName, table, true);
 	}
 }

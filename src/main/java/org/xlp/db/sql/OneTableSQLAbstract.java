@@ -626,7 +626,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 			case NIN:
 			case BETWEEN:
 			case NBETWEEN:
-				 valueList.add(Arrays.asList(fieldItem.getValues())); 
+				 valueList.addAll(Arrays.asList(fieldItem.getValues())); 
 				break;
 			default:
 				break;
