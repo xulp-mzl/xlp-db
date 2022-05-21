@@ -20,7 +20,7 @@ import org.xlp.db.utils.BeanUtil;
  *         </p>
  * @version 1.0
  */
-public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T>{
+public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T> implements Query{
 	/**
 	 * 存储排序字段
 	 */

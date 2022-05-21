@@ -38,7 +38,7 @@ import org.xlp.utils.XLPStringUtil;
  * @version 1.0 
  * @Description 多表联合查询SQL对象
 */
-public class ComplexQuerySQL implements SQL{
+public class ComplexQuerySQL implements Query{
 	/**
 	 * 日志记录
 	 */
@@ -115,7 +115,7 @@ public class ComplexQuerySQL implements SQL{
 	private Limit limit;
 	
 	/**
-	 * 存储排序字段
+	 * 存储排序字段 key：字段名称，value：排序方式
 	 */
 	private Map<String, String> sortFields = new LinkedHashMap<String, String>();
 	
@@ -1785,67 +1785,72 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * exists语句
 	 * 
-	 * @param sql
+	 * @param query
 	 * @return
 	 */
-	private ComplexQuerySQL exists(SQL sql, ConnectorEnum connector,
+	private ComplexQuerySQL exists(Query query, ConnectorEnum connector,
 			OperatorEnum operator){
-		fieldItems.add(new ComplexQueryFieldItem(connector, operator, ValueType.SQL, sql, null));
+		fieldItems.add(new ComplexQueryFieldItem(connector, operator, ValueType.SQL, query, null));
 		return this;
 	}
 	
 	/**
 	 * and exists
 	 * 
-	 * @param sql
+	 * @param query
 	 * @throws NullPointerException 假如第参数为null，则抛出该异常
 	 * @return
 	 */
-	public ComplexQuerySQL andExists(SQL sql){
-		AssertUtils.isNotNull(sql, "sql parameter is null!");
-		return exists(sql, ConnectorEnum.AND, OperatorEnum.EXISTS);
+	public ComplexQuerySQL andExists(Query query){
+		AssertUtils.isNotNull(query, "query parameter is null!");
+		return exists(query, ConnectorEnum.AND, OperatorEnum.EXISTS);
 	}
 	
 	/**
 	 * or exists
 	 * 
-	 * @param sql
+	 * @param query
 	 * @throws NullPointerException 假如第参数为null，则抛出该异常
 	 * @return
 	 */
-	public ComplexQuerySQL orExists(SQL sql){
-		AssertUtils.isNotNull(sql, "sql parameter is null!");
-		return exists(sql, ConnectorEnum.OR, OperatorEnum.EXISTS);
+	public ComplexQuerySQL orExists(Query query){
+		AssertUtils.isNotNull(query, "query parameter is null!");
+		return exists(query, ConnectorEnum.OR, OperatorEnum.EXISTS);
 	}
 	
 	/**
 	 * and not exists
 	 * 
-	 * @param sql
+	 * @param query
 	 * @throws NullPointerException 假如第参数为null，则抛出该异常
 	 * @return
 	 */
-	public ComplexQuerySQL andNotExists(SQL sql){
-		AssertUtils.isNotNull(sql, "sql parameter is null!");
-		return exists(sql, ConnectorEnum.AND, OperatorEnum.NOT_EXISTS);
+	public ComplexQuerySQL andNotExists(Query query){
+		AssertUtils.isNotNull(query, "query parameter is null!");
+		return exists(query, ConnectorEnum.AND, OperatorEnum.NOT_EXISTS);
 	}
 	
 	/**
 	 * or not exists语句
 	 * 
-	 * @param sql
+	 * @param query
 	 * @throws NullPointerException 假如第参数为null，则抛出该异常
 	 * @return
 	 */
-	public ComplexQuerySQL orNotExists(SQL sql){
-		AssertUtils.isNotNull(sql, "sql parameter is null!");
-		return exists(sql, ConnectorEnum.OR, OperatorEnum.NOT_EXISTS);
+	public ComplexQuerySQL orNotExists(Query query){
+		AssertUtils.isNotNull(query, "query parameter is null!");
+		return exists(query, ConnectorEnum.OR, OperatorEnum.NOT_EXISTS);
 	}
 
 	public List<ComplexQueryFieldItem> getHavingFieldItems() {
 		return havingFieldItems;
 	}
 
+	/**
+	 * 获取排序字段, key：字段名称，value：排序方式
+	 * 
+	 * @return
+	 */
 	public Map<String, String> getSortFields() {
 		return sortFields;
 	}
