@@ -18,7 +18,7 @@ public interface SQL {
 	//左括号
 	public final static String LEFT_BRACKET = "(";
 	//右括号+空格
-	public final static String RIGHT_BRACKET = ") ";
+	public final static String RIGHT_BRACKET = ")";
 	//问号
 	public final static String INTERROGATION = "?";
 	//or

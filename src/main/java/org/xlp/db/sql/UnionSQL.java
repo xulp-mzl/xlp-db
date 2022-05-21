@@ -93,14 +93,21 @@ public class UnionSQL implements Query {
 		if (wrapper) {
 			sb.append("select * from (");
 		}
+		if (!XLPMapUtil.isEmpty(childrenQueryMap)) {
+			sb.append(LEFT_BRACKET);
+		}
 		sb.append(query.getParamSql());
+		if (!XLPMapUtil.isEmpty(childrenQueryMap)) {
+			sb.append(RIGHT_BRACKET);
+		}
 		//拼接子SQL对象
 		for (Entry<Query, UnionType> entry : childrenQueryMap.entrySet()) {
 			sb.append(" ").append(entry.getValue().getValue())
-				.append(" ").append(entry.getKey().getParamSql());
+				.append(" ").append(LEFT_BRACKET).append(entry.getKey().getParamSql())
+				.append(RIGHT_BRACKET);
 		}
 		if (wrapper) {
-			sb.append(SQL.RIGHT_BRACKET).append(" ").append(getAlias());
+			sb.append(RIGHT_BRACKET).append(" ").append(getAlias());
 		}
 		
 		//拼接排序SQL片段
