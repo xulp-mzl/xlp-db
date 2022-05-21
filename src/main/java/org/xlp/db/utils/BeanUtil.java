@@ -1,13 +1,11 @@
 package org.xlp.db.utils;
 
 
-import java.lang.ref.SoftReference;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xlp.db.tableoption.annotation.XLPColumn;
+import org.xlp.assertion.AssertUtils;
+import org.xlp.db.exception.EntityException;
+import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.tableoption.annotation.XLPId;
 import org.xlp.javabean.JavaBeanPropertiesDescriptor;
@@ -31,11 +29,6 @@ public class BeanUtil {
 	// 日志记录
 	private final static Logger LOGGER = LoggerFactory.getLogger(BeanUtil.class);
 	
-	/**
-	 * 保存已记录的实体类和其对应的描述信息
-	 */
-	private static SoftReference<Map<Class<?>, PropertyDescriptor<?>[]>> softReference; 
-
 	/**
 	 * 得到实体注解
 	 * 
@@ -107,48 +100,24 @@ public class BeanUtil {
 		return getIsPrimaryKey(beanClass) != null;
 	}
 
-	private static synchronized void createSoftReference(){
-		if (softReference == null || softReference.get() == null) {
-			 softReference = new SoftReference<Map<Class<?>,PropertyDescriptor<?>[]>>(
-					 new HashMap<Class<?>,PropertyDescriptor<?>[]>());
-		}
-	}
-	
 	/**
-	 * 获取指定字段的别名，即所含注解描述名
+	 * 获取指定字段的别名，即所含注解描述名，也即对应数据库中的字段名称
 	 * 
-	 * @param beanClass
-	 * @param fieldName
-	 * @return
+	 * @param table
+	 * @param fieldName 实体字段名
 	 * @throws NullPointerException
 	 *             假如参数为null，则抛出该异常
+	 * @throws EntityException 
+	 * 				假如参数为没有该字段，则抛出该异常
+	 * @return 实体字段名对应的数据库表字段名
 	 */
-	public static <T> String getFieldAlias(Class<T> beanClass, String fieldName) {
-		createSoftReference();
-		Map<Class<?>,PropertyDescriptor<?>[]> map = softReference.get();
-		@SuppressWarnings("unchecked")
-		PropertyDescriptor<T>[] pds = (PropertyDescriptor<T>[]) map.get(beanClass);
-		if (pds == null) {
-			pds = new JavaBeanPropertiesDescriptor<T>(beanClass).getPds();
-			map.put(beanClass, pds);
+	public static <T> String getFieldAlias(Table<?> table, String fieldName) {
+		AssertUtils.isNotNull(table, "table parameter is null!");
+		String columnName = table.getBeanFieldNameMapperDbColumnNameMap().get(fieldName);
+		if (XLPStringUtil.isEmpty(columnName)) {
+			throw new EntityException(table.getEntityClass() + "该实体类中没有[" + fieldName + "]字段");
 		}
-
-		int len = pds.length;
-		XLPColumn xlpColumn;
-		XLPId xlpId;
-		// XLPIrrelevantColumn irrelevantColumn;
-		String alias = null; // 别名
-		for (int i = 0; i < len; i++) {
-			if (pds[i].getFieldName().equals(fieldName)) {
-				if ((xlpColumn = pds[i].getFieldAnnotation(XLPColumn.class)) != null) {
-					alias = xlpColumn.columnName();
-				} else if ((xlpId = pds[i].getFieldAnnotation(XLPId.class)) != null) {
-					alias = xlpId.columnName();
-				}
-				break;
-			}
-		}
-		return XLPStringUtil.emptyToNull(alias);
+		return columnName;
 	}
 
 	/**

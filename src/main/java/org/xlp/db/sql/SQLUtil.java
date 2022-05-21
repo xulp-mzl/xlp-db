@@ -30,7 +30,7 @@ public final class SQLUtil {
 			return null;
 		}
 		String tableName = xlpEntity.tableName();
-		return XLPStringUtil.isNullOrEmpty(tableName) ? null : tableName;
+		return XLPStringUtil.isEmpty(tableName) ? null : tableName;
 	}
 
 	/**
@@ -134,16 +134,8 @@ public final class SQLUtil {
 			suffix = fieldName.substring(index + 1);
 		}
 		pre = XLPStringUtil.isEmpty(pre) ? XLPStringUtil.EMPTY : pre + ".";
-		String colName = BeanUtil.getFieldAlias(table.getEntityClass(), suffix);
-		//去掉空白字符suffix.replaceAll("\\s", XLPStringUtil.EMPTY)
-		//去掉非法字符
-		colName = XLPStringUtil.isEmpty(colName) 
-				? suffix.replaceAll("\\s", XLPStringUtil.EMPTY)
-						.replace("'", XLPStringUtil.EMPTY)
-						.replace("--", XLPStringUtil.EMPTY)
-						.replace("\\", XLPStringUtil.EMPTY)
-				: colName;
-		return pre + colName;
+		String colName = BeanUtil.getFieldAlias(table, suffix);
+		return  pre + colName;
 	}
 	
 	/**
@@ -156,5 +148,20 @@ public final class SQLUtil {
 	 */
 	public static String getColumnName(String fieldName, Table<?> table){
 		return getColumnName(fieldName, table, true);
+	}
+	
+	/**
+	 * 去掉非法字符
+	 * 
+	 * @param columnName
+	 * @return
+	 * @throws NullPointerException 假如参数为空，则抛出该异常
+	 */
+	public static String getColumnName(String columnName){
+		AssertUtils.isNotNull(columnName, "columnName parameter is null or empty!");
+		return columnName.replaceAll("\\s", XLPStringUtil.EMPTY)
+			.replace("'", XLPStringUtil.EMPTY)
+			.replace("--", XLPStringUtil.EMPTY)
+			.replace("\\", XLPStringUtil.EMPTY);
 	}
 }

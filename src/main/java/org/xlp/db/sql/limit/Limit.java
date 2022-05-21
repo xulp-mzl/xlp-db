@@ -1,8 +1,5 @@
 package org.xlp.db.sql.limit;
 
-import org.xlp.db.tableoption.xlpenum.DBType;
-import org.xlp.db.utils.XLPDBUtil;
-
 /**
  * limit类，存储分页查询的基本信息
  * 
@@ -21,15 +18,7 @@ public class Limit {
 	 * 每页数量
 	 */
 	private long resultCount;
-	//数据库类型
-	private DBType dbType;
-	//数据库名称
-	private static final String MYSQL = "MySQL";
 	
-	protected Limit(){
-		//setDbType();
-	}
-
 	/**
 	 * 构造函数
 	 * 
@@ -39,40 +28,13 @@ public class Limit {
 	public Limit(long startPos, long resultCount) {
 		this.startPos = startPos;
 		this.resultCount = resultCount;
-		//setDbType();
 	}
 
 	public long getStartPos() {
 		return startPos;
 	}
 
-	public void setStartPos(long startPos) {
-		this.startPos = startPos;
-	}
-
 	public long getResultCount() {
 		return resultCount;
-	}
-
-	public void setResultCount(long resultCount) {
-		this.resultCount = resultCount;
-	}
-
-	public DBType getDbType() {
-		return dbType;
-	}
-
-	protected void setDbType() {
-		String dbName = XLPDBUtil.getDatabaseProductName();
-		if (MYSQL.equalsIgnoreCase(dbName)) {
-			this.dbType = DBType.MYSQL_DB;
-		}
-		
-	}
-
-	@Override
-	public String toString() {
-		return "Limit [dbType=" + dbType + ", resultCount=" + resultCount
-				+ ", startPos=" + startPos + "]";
 	}
 }

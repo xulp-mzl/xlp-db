@@ -21,10 +21,11 @@ class SQLParamUtil {
 	 * 获取SQL预处理参数
 	 * 
 	 * @param complexQuerySQL
+	 *  @param exeCount 标记是否是执行count语句
 	 * @throws NullPointerException 假如参数为null，则抛出该异常
 	 * @return
 	 */
-	public static Object[] getSqlParams(ComplexQuerySQL complexQuerySQL){
+	public static Object[] getSqlParams(ComplexQuerySQL complexQuerySQL, boolean exeCount){
 		AssertUtils.isNotNull(complexQuerySQL, "complexQuerySQL parameter is null!");
 		List<ComplexQueryFieldItem> items = new LinkedList<ComplexQueryFieldItem>();
 		complexQuerySQL = complexQuerySQL.getTopComplexQuerySQL();
@@ -33,7 +34,7 @@ class SQLParamUtil {
 		
 		List<Object> params = itemToParam(items);
 		Limit limit = complexQuerySQL.getLimit();
-		if (limit != null && !complexQuerySQL.isExeCount()) {
+		if (limit != null && !exeCount) {
 			params.add(limit.getStartPos());
 			params.add(limit.getResultCount());
 		}		

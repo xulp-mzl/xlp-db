@@ -26,10 +26,11 @@ class SQLPartUtil {
 	 * 形成条件语句
 	 * 
 	 * @param complexQuerySQL
+	 * @param exeCount 标记是否是执行count语句
 	 * @throws NullPointerException 假如参数为null，则抛出该异常
 	 * @return
 	 */
-	public static String formatTablePartSql(ComplexQuerySQL complexQuerySQL){
+	public static String formatTablePartSql(ComplexQuerySQL complexQuerySQL, boolean exeCount){
 		AssertUtils.isNotNull(complexQuerySQL, "complexQuerySQL parameter is null!");
 		complexQuerySQL = complexQuerySQL.getTopComplexQuerySQL();
 		StringBuilder sb = new StringBuilder();
@@ -38,7 +39,7 @@ class SQLPartUtil {
 			sb.append(" distinct");
 		}
 		//拼接每个查询字段的SQL片段
-		joinQueryFieldSql(sb, complexQuerySQL);
+		joinQueryFieldSql(sb, complexQuerySQL, exeCount);
 		//获取实体对应的表对象
 		Table<?> table = complexQuerySQL.getTable();
 		sb.append(" from ").append(table.getTableName()).append(" ");
@@ -71,7 +72,7 @@ class SQLPartUtil {
 		joinOrderBySql(complexQuerySQL, sb);
 		
 		//拼接limit语句
-		if (complexQuerySQL.getLimit() != null && !complexQuerySQL.isExeCount()) {
+		if (complexQuerySQL.getLimit() != null && !exeCount) {
 			sb.append(" limit ?,?");
 		}
 		
@@ -117,11 +118,13 @@ class SQLPartUtil {
 	 * 
 	 * @param sb
 	 * @param complexQuerySQL
+	 * @param exeCount 标记是否是执行count语句
 	 */
-	private static void joinQueryFieldSql(StringBuilder sb, ComplexQuerySQL topComplexQuerySQL){
+	private static void joinQueryFieldSql(StringBuilder sb, ComplexQuerySQL topComplexQuerySQL,
+			boolean exeCount){
 		List<SQLStatisticsType> sqlStatisticsTypes = topComplexQuerySQL.getSqlStatisticsType();
 		//判断是否是统计数据条数
-		if (topComplexQuerySQL.isExeCount()) {
+		if (exeCount) {
 			SQLStatisticsType count = null; 
 			for (SQLStatisticsType sqlStatisticsType : sqlStatisticsTypes) {
 				if (sqlStatisticsType instanceof DistinctCount) {
@@ -138,7 +141,7 @@ class SQLPartUtil {
 		}
 		
 		//获取查询出的字段名称
-		List<Map<String, String>> queryFields = topComplexQuerySQL.getQueryFields();
+		List<Map<String, Object>> queryFields = topComplexQuerySQL.getQueryFields();
 		if (XLPCollectionUtil.isEmpty(queryFields)) {
 			if (XLPCollectionUtil.isEmpty(sqlStatisticsTypes)) {
 				//查询字段为空时，查询所有字段值
@@ -152,14 +155,14 @@ class SQLPartUtil {
 		}
 		boolean start = true;
 		String alias;
-		for (Map<String, String> map : queryFields) {
+		for (Map<String, Object> map : queryFields) {
 			if (!start) {
 				sb.append(SQL.COMMA);
 			}
 			start = false;
 			//拼接每个查询
 			sb.append(" ").append(map.get(ComplexQuerySQL.QUERY_FIELD_NAME_KEY));
-			alias = map.get(ComplexQuerySQL.QUERY_FIELD_ALIAS_KEY);
+			alias = (String) map.get(ComplexQuerySQL.QUERY_FIELD_ALIAS_KEY);
 			if (!XLPStringUtil.isEmpty(alias)) {
 				sb.append(" ").append(alias);
 			}

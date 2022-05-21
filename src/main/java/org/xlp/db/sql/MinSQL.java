@@ -31,7 +31,7 @@ public class MinSQL<T> extends QuerySQLAbstract<T> {
 	 */
 	protected MinSQL(T bean, String minFieldName) throws EntityException {
 		super(bean);
-		this.minFieldName = BeanUtil.getFieldAlias(beanClass, minFieldName);
+		this.minFieldName = BeanUtil.getFieldAlias(getTable(), minFieldName);
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class MinSQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public MinSQL(Class<T> beanClass, String minFieldName) throws EntityException {
 		super(beanClass);
-		this.minFieldName = BeanUtil.getFieldAlias(beanClass, minFieldName);
+		this.minFieldName = BeanUtil.getFieldAlias(getTable(), minFieldName);
 	}
 
 	/**

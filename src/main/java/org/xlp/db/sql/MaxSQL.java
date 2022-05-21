@@ -31,7 +31,7 @@ public class MaxSQL<T> extends QuerySQLAbstract<T> {
 	 */
 	protected MaxSQL(T bean, String maxFieldName) throws EntityException {
 		super(bean);
-		this.maxFieldName = BeanUtil.getFieldAlias(beanClass, maxFieldName);
+		this.maxFieldName = BeanUtil.getFieldAlias(getTable(), maxFieldName);
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class MaxSQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public MaxSQL(Class<T> beanClass, String maxFieldName) throws EntityException {
 		super(beanClass);
-		this.maxFieldName = BeanUtil.getFieldAlias(beanClass, maxFieldName);
+		this.maxFieldName = BeanUtil.getFieldAlias(getTable(), maxFieldName);
 	}
 	
 	/**

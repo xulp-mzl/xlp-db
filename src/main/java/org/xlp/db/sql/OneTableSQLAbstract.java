@@ -127,7 +127,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件拼装
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 其对应值
 	 * @param connector 条件（and | or）
 	 * @param op 操作符（=，>, < ...）
@@ -138,8 +138,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		if(fieldName == null)
 			return this;
 		
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
+		String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 	
 		fieldItems.add(new FieldItem(connector, op, colName, value, table));
 		
@@ -149,7 +148,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param connector 条件（and | or）
 	 * @param op 操作符（is null，is not null）
 	 * @return
@@ -158,8 +157,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 			, ConnectorEnum connector, OperatorEnum op){
 		if(fieldName == null)
 			return this;
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
+		String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 		
 		fieldItems.add(new FieldItem(connector, op, colName, null, table));
 		
@@ -169,7 +167,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -183,7 +181,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or is null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orIsNull(String fieldName){
@@ -193,7 +191,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -207,7 +205,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and is null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andIsNull(String fieldName){
@@ -217,7 +215,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or !=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -231,7 +229,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or is not null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> orNotNull(String fieldName){
@@ -241,7 +239,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and !=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -255,7 +253,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and is not null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @return SQL对象
 	 */
 	public OneTableSQLAbstract<T> andNotNull(String fieldName){
@@ -265,7 +263,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and >
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -276,7 +274,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or >
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -287,7 +285,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and <
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -298,7 +296,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or <
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -309,7 +307,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and <=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -320,7 +318,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or <=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -331,7 +329,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and >=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -342,7 +340,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or >=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -353,7 +351,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件拼装
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 其对应值
 	 * @param connector 条件（and | or）
 	 * @param op 操作符（like not like）
@@ -364,9 +362,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 		if(fieldName == null)
 			return this;
 		
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
-		
+		String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 		value = (value == null ? "" :  value.toString()
 				.replace("%", "\\%").replace("_", "\\_"));
 	
@@ -378,7 +374,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or like
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -389,7 +385,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and like
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -400,7 +396,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or not like
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -411,7 +407,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and not like
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -422,7 +418,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param values 对应的值
 	 * @param op 操作符（in | not in）
 	 * @param connector (or | and)
@@ -432,9 +428,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 			ConnectorEnum connector,  Object... values){
 		if(fieldName == null || values == null || values.length == 0)
 			return this;
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
-		
+		String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 		_deepIn(colName, op, connector, values);
 		
 		return this;
@@ -470,7 +464,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -481,7 +475,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -492,7 +486,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or not in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param values 对应的值
 	 * @return SQL对象
 	 */
@@ -503,7 +497,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and not in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param values 对应的值
 	 * @return SQL对象
 	 */
@@ -514,7 +508,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or between
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value1 对应的值1
 	 * @param value2 对应的值2
 	 * @return SQL对象
@@ -526,7 +520,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and between
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value1 对应的值1
 	 * @param value2 对应的值2
 	 * @return SQL对象
@@ -549,8 +543,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 			OperatorEnum operator, Object value1, Object value2) {
 		if(fieldName == null)
 			return this;
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
+		String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 		
 		fieldItems.add(new FieldItem(condition, operator, colName, 
 				new Object[]{value1, value2}, table));
@@ -561,7 +554,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件or not between
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value1 对应的值1
 	 * @param value2 对应的值2
 	 * @return SQL对象
@@ -573,7 +566,7 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	/**
 	 * 条件and not between
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value1 对应的值1
 	 * @param value2 对应的值2
 	 * @return SQL对象

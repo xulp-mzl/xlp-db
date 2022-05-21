@@ -15,7 +15,6 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xlp.utils.XLPOutputInfoUtil;
 import org.xlp.utils.io.XLPIOUtil;
 import org.xlp.utils.net.XLPHttpRequestUtil;
 import org.xml.sax.EntityResolver;

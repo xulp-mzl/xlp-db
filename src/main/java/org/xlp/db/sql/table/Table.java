@@ -2,7 +2,9 @@ package org.xlp.db.sql.table;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.sql.SQLUtil;
@@ -25,8 +27,14 @@ import org.xlp.utils.XLPStringUtil;
 public class Table<T> {
 	private String tableName; //表名
 	private String alias; //表别名
-	private String[] allColumnNames;//表所有所有字段数组（主键字段在最前）
-	private String[] columnNames;//表所有所有字段数组除key对应字段外
+	/**
+	 * 表所有所有字段数组（主键字段在最前）即对应表中的字段名
+	 */
+	private String[] allColumnNames;
+	/**
+	 * 表所有所有字段数组除key对应字段外，即对应表中的字段名
+	 */
+	private String[] columnNames;
 	
 	/**
 	 * 对应的实体类对象 
@@ -42,6 +50,11 @@ public class Table<T> {
 	 * 存储外键对应的字段
 	 */
 	private List<Field> foreignFields = new ArrayList<Field>();
+	
+	/**
+	 * 实体字段名与数据库表列名映射关系 key:实体字段名,value数据库表列名
+	 */
+	private Map<String, String> beanFieldNameMapperDbColumnNameMap = new HashMap<String, String>(); 
 	
 	/**
 	 * 以实体类型构建此对象
@@ -81,6 +94,7 @@ public class Table<T> {
 			allColumnNames[i] = XLPStringUtil.isEmpty(allColumnNames[i]) ? 
 					kPds[i].getFieldName() : allColumnNames[i];
 			primaryFields.add(kPds[i].getField());
+			beanFieldNameMapperDbColumnNameMap.put(kPds[i].getFieldName(), allColumnNames[i]);
 		}
 		
 		String colName = null;
@@ -89,6 +103,7 @@ public class Table<T> {
 			colName = XLPStringUtil.isEmpty(colName) ? pds[i].getFieldName() : colName;
 			allColumnNames[i] = colName; //初始化表所有所有字段数组（主键字段在最前）
 			columnNames[j] = colName; //表所有所有字段数组除key对应字段外
+			beanFieldNameMapperDbColumnNameMap.put(pds[j].getFieldName(), colName);
 		}
 		
 		pds = jbp.getPdsWithAnnotation(XLPForeign.class);//外键属性字段描述
@@ -141,5 +156,14 @@ public class Table<T> {
 	 */
 	public Class<T> getEntityClass() {
 		return entityClass;
+	}
+	
+	/**
+	 * 实体字段名与数据库表列名映射关系 key:实体字段名,value数据库表列名
+	 * 
+	 * @return
+	 */
+	public Map<String, String> getBeanFieldNameMapperDbColumnNameMap() {
+		return beanFieldNameMapperDbColumnNameMap;
 	}
 }

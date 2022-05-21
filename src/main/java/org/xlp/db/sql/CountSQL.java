@@ -110,8 +110,7 @@ public class CountSQL<T> extends QuerySQLAbstract<T>{
 	 */
 	public CountSQL<T> count(String fieldName){
 		if (!XLPStringUtil.isEmpty(fieldName)) {
-			String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-			colName = (colName == null ? fieldName : colName);
+			String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 			countField = colName;
 		}
 		return this;
@@ -127,9 +126,8 @@ public class CountSQL<T> extends QuerySQLAbstract<T>{
 		if (!XLPArrayUtil.isEmpty(fieldNames)) { 
 			distinctFields = new String[fieldNames.length];
 			for (int i = 0; i < fieldNames.length; i++) {
-				String colName = BeanUtil.getFieldAlias(beanClass, fieldNames[i]);
-				colName = (colName == null ? fieldNames[i] : colName);
-				distinctFields[i] = fieldNames[i];
+				String colName = BeanUtil.getFieldAlias(getTable(), fieldNames[i]);
+				distinctFields[i] = colName;
 			}
 		}
 		return this;

@@ -116,15 +116,14 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 	/**
 	 * 设置要更新的字段
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param value 对应的值
 	 * @return UpdateSQL对象
 	 */
 	public UpdateSQL<T> set(String fieldName, Object value){
 		if(fieldName == null)
 			return this;
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
+		String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 		columnNames.add(colName);
 		updateValues.add(value);
 		return this;
@@ -150,8 +149,7 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 	 */
 	public UpdateSQL<T> removeUpdate(String fieldName) {
 		if (!XLPStringUtil.isEmpty(fieldName)) {
-			String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-			colName = (colName == null ? fieldName : colName);
+			String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 			int size = columnNames.size();
 			for (int i = 0; i < size; i++) {
 				if(colName.equals(columnNames.get(i))){

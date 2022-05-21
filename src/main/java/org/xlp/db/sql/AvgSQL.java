@@ -31,7 +31,7 @@ public class AvgSQL<T> extends QuerySQLAbstract<T> {
 	 */
 	protected AvgSQL(T bean, String avgFieldName) throws EntityException {
 		super(bean);
-		this.avgFieldName = BeanUtil.getFieldAlias(beanClass, avgFieldName);
+		this.avgFieldName = BeanUtil.getFieldAlias(getTable(), avgFieldName);
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class AvgSQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public AvgSQL(Class<T> beanClass, String avgFieldName) throws EntityException {
 		super(beanClass);
-		this.avgFieldName = BeanUtil.getFieldAlias(beanClass, avgFieldName);
+		this.avgFieldName = BeanUtil.getFieldAlias(getTable(), avgFieldName);
 	}
 
 	/**

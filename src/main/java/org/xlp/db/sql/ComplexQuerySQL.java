@@ -27,11 +27,13 @@ import org.xlp.db.sql.statisticsfun.Sum;
 import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.annotation.XLPForeign;
 import org.xlp.utils.XLPArrayUtil;
+import org.xlp.utils.XLPPackingTypeUtil;
 import org.xlp.utils.XLPSplitUtils;
 import org.xlp.utils.XLPStringUtil;
 
 /**
  * <p>创建时间：2022年5月15日 下午7:52:43</p>
+ * <p>以下所说的字段名称个格式可以是：xxx, yy.xxx</p>
  * @author xlp
  * @version 1.0 
  * @Description 多表联合查询SQL对象
@@ -80,7 +82,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 需要查询出的字段名称[{name:xxx, alias:xxx}]
 	 */
-	private List<Map<String, String>> queryFields = new ArrayList<Map<String, String>>();
+	private List<Map<String, Object>> queryFields = new ArrayList<Map<String, Object>>();
 	
 	/**
 	 * 表连接方式
@@ -131,11 +133,6 @@ public class ComplexQuerySQL implements SQL{
 	 * sql having 条件对象集合
 	 */
 	protected List<ComplexQueryFieldItem> havingFieldItems = new ArrayList<ComplexQueryFieldItem>();
-	
-	/**
-	 * 标记是否是执行count语句
-	 */
-	private boolean exeCount = false;
 	
 	/**
 	 * 私有构造函数
@@ -429,7 +426,7 @@ public class ComplexQuerySQL implements SQL{
 		return getTopComplexQuerySQL().sqlStatisticsType;
 	}
 
-	public List<Map<String, String>> getQueryFields() {
+	public List<Map<String, Object>> getQueryFields() {
 		return getTopComplexQuerySQL().queryFields;
 	}
 
@@ -444,17 +441,25 @@ public class ComplexQuerySQL implements SQL{
 	@Override
 	public String getSql() {
 		StringBuilder sb = new StringBuilder(getParamSql());
-		return SQLUtil.fillWithParams(sb, getParams());
+		String sql = SQLUtil.fillWithParams(sb, getParams());
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("执行SQL语句是：" + sql);
+		}
+		return sql;
 	}
 
 	@Override
 	public String getParamSql() {
-		return SQLPartUtil.formatTablePartSql(this);
+		String sql = SQLPartUtil.formatTablePartSql(this, false);
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("执行SQL语句是：" + sql);
+		}
+		return sql;
 	}
 
 	@Override
 	public Object[] getParams() {
-		return SQLParamUtil.getSqlParams(this);
+		return SQLParamUtil.getSqlParams(this, false);
 	}
 
 	@Override
@@ -502,33 +507,84 @@ public class ComplexQuerySQL implements SQL{
 	}
 	
 	/**
+	 * 添加条件
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 其对应值
+	 * @param connector 条件（and | or）
+	 * @param op 操作符（=，>, < , !=, >=, <=）
+	 * @param flagValue 标记value是否是字段名称
+	 * @param useAlias 标记是否用的是别名作为条件， false: 不是， true：是
+	 * @throws IllegalArgumentException 操作符不在给定的要求内，则抛出该异常
+	 * @throws NullPointerException
+	 * @return
+	 */
+	public ComplexQuerySQL addCondition(String fieldName, Object value
+			, ConnectorEnum connector, OperatorEnum op, boolean flagValue,
+			boolean useAlias){
+		AssertUtils.isNotNull(fieldName, "fieldName parameter is null or empty!");
+		AssertUtils.isNotNull(connector, "connector parameter is null or empty!");
+		AssertUtils.isNotNull(op, "op parameter is null or empty!");
+		switch (op) {
+			case EQ:
+			case NEQ:
+			case GT:
+			case GE:
+			case LT:
+			case LE:
+				break;
+	
+			default:
+				throw new IllegalArgumentException("不支持该操作符：" + op);
+		}
+		return M(fieldName, value, connector, op, flagValue, useAlias);
+	}
+	
+	/**
+	 * 添加条件
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 其对应值
+	 * @param connector 条件（and | or）
+	 * @param op 操作符（=，>, < , !=, >=, <=）
+	 * @param useAlias 标记是否用的是别名作为条件， false: 不是， true：是
+	 * @throws IllegalArgumentException 操作符不在给定的要求内，则抛出该异常
+	 * @throws NullPointerException
+	 * @return
+	 */
+	public ComplexQuerySQL addCondition(String fieldName, Object value,
+			ConnectorEnum connector, OperatorEnum op, boolean useAlias){
+		return addCondition(fieldName, value, connector, op, false, useAlias);
+	}
+	
+	/**
 	 * 条件拼装
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 其对应值
 	 * @param connector 条件（and | or）
 	 * @param op 操作符（=，>, < ...）
 	 * @param flagValue 标记value是否是字段名称
+	 * @param useAlias 标记是否用的是别名作为条件， false: 不是， true：是
 	 * @return
 	 */
 	private ComplexQuerySQL M(String fieldName, Object value
-			, ConnectorEnum connector, OperatorEnum op, boolean flagValue){
+			, ConnectorEnum connector, OperatorEnum op, boolean flagValue,
+			boolean useAlias){
 		if(fieldName == null)
 			return this;
 		
+		String colName = useAlias ? SQLUtil.getColumnName(fieldName)
+				: SQLUtil.getColumnName(fieldName, table);
+		if (flagValue) {
+			value = useAlias ? SQLUtil.getColumnName((String) value)
+					: SQLUtil.getColumnName((String) value, table);;
+		}
 		if (getTopComplexQuerySQL().having) {
-			String colName = SQLUtil.getColumnName(fieldName, table, false);
-			if (flagValue) {
-				value = SQLUtil.getColumnName(fieldName, table, false);
-			}
 			getTopComplexQuerySQL().havingFieldItems
 				.add(new ComplexQueryFieldItem(connector, op, colName, value, null,
 						flagValue ? ValueType.FIELD : ValueType.VALUE));
 		} else {
-			String colName = SQLUtil.getColumnName(fieldName, table);
-			if (flagValue) {
-				value = SQLUtil.getColumnName(fieldName, table);
-			}
 			fieldItems.add(new ComplexQueryFieldItem(connector, op, colName, value, null, 
 					flagValue ? ValueType.FIELD : ValueType.VALUE));
 		}
@@ -538,16 +594,17 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param connector 条件（and | or）
 	 * @param op 操作符（is null，is not null）
+	 * @param useAlias 标记是否用的是别名作为条件， false: 不是， true：是
 	 * @return
 	 */
 	private ComplexQuerySQL NULL(String fieldName
-			, ConnectorEnum connector, OperatorEnum op){
+			, ConnectorEnum connector, OperatorEnum op, boolean useAlias){
 		if(fieldName == null)
 			return this;
-		String colName = SQLUtil.getColumnName(fieldName, table);
+		String colName = useAlias ? SQLUtil.getColumnName(fieldName) : SQLUtil.getColumnName(fieldName, table);
 		
 		fieldItems.add(new ComplexQueryFieldItem(connector, op, colName, null, null));
 		
@@ -557,7 +614,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 条件or=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -568,8 +625,8 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 条件or=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
-	 * @param value 对应的值，或bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
+	 * @param value 对应的值，或bean字段名
 	 * @param flagValue 标记value是否是字段名称
 	 * @return SQL对象
 	 */
@@ -577,23 +634,48 @@ public class ComplexQuerySQL implements SQL{
 		if(value == null && !flagValue){
 			return orIsNull(fieldName);
 		}		
-		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.EQ, flagValue);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.EQ, flagValue, false);
+	}
+	
+	/**
+	 * 条件or=
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值，或bean字段名
+	 * @param flagValue 标记value是否是字段名称
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orEqAlias(String fieldName, Object value){
+		if(value == null){
+			return orIsNullAlias(fieldName);
+		}		
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.EQ, false, true);
 	}
 	
 	/**
 	 * 条件or is null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orIsNull(String fieldName){
-		return NULL(fieldName, ConnectorEnum.OR, OperatorEnum.IS_NULL);
+		return NULL(fieldName, ConnectorEnum.OR, OperatorEnum.IS_NULL, false);
+	}
+	
+	/**
+	 * 条件or is null
+	 * 
+	 * @param fieldName bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orIsNullAlias(String fieldName){
+		return NULL(fieldName, ConnectorEnum.OR, OperatorEnum.IS_NULL, true);
 	}
 	
 	/**
 	 * 条件and=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -604,8 +686,8 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 条件and=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
-	 * @param value 对应的值，或bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
+	 * @param value 对应的值，或bean字段名
 	 * @param flagValue 标记value是否是字段名称
 	 * @return SQL对象
 	 */
@@ -613,24 +695,49 @@ public class ComplexQuerySQL implements SQL{
 		if(value == null && !flagValue){
 			return andIsNull(fieldName);
 		}		
-		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.EQ, flagValue);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.EQ, flagValue, false);
+	}
+	
+	/**
+	 * 条件and=
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值，或bean字段名
+	 * @param flagValue 标记value是否是字段名称
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andEqAlias(String fieldName, Object value){
+		if(value == null){
+			return andIsNullAlias(fieldName);
+		}		
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.EQ, false, true);
 	}
 	
 	/**
 	 * 条件and is null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andIsNull(String fieldName){
-		return NULL(fieldName, ConnectorEnum.AND, OperatorEnum.IS_NULL);
+		return NULL(fieldName, ConnectorEnum.AND, OperatorEnum.IS_NULL, false);
+	}
+	
+	/**
+	 * 条件and is null
+	 * 
+	 * @param fieldName bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andIsNullAlias(String fieldName){
+		return NULL(fieldName, ConnectorEnum.AND, OperatorEnum.IS_NULL, true);
 	}
 
 	/**
 	 * 条件or !=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
-	 * @param value 对应的值，或bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
+	 * @param value 对应的值，或bean字段名
      * @param flagValue 标记value是否是字段名称
 	 * @return SQL对象
 	 */
@@ -638,13 +745,28 @@ public class ComplexQuerySQL implements SQL{
 		if(value == null && !flagValue)
 			return orNotNull(fieldName);
 
-		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.NEQ, flagValue);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.NEQ, flagValue, false);
 	}
 	
 	/**
 	 * 条件or !=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
+	 * @param value 对应的值，或bean字段名
+     * @param flagValue 标记value是否是字段名称
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orNotEqAlias(String fieldName, Object value){
+		if(value == null)
+			return orNotNullAlias(fieldName);
+
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.NEQ, false, true);
+	}
+	
+	/**
+	 * 条件or !=
+	 * 
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -655,18 +777,28 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 条件or is not null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orNotNull(String fieldName){
-		return NULL(fieldName, ConnectorEnum.OR, OperatorEnum.IS_NOT_NULL);
+		return NULL(fieldName, ConnectorEnum.OR, OperatorEnum.IS_NOT_NULL, false);
+	}
+	
+	/**
+	 * 条件or is not null
+	 * 
+	 * @param fieldName bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orNotNullAlias(String fieldName){
+		return NULL(fieldName, ConnectorEnum.OR, OperatorEnum.IS_NOT_NULL, true);
 	}
 	
 	/**
 	 * 条件and !=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
-	 * @param value 对应的值，或bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
+	 * @param value 对应的值，或bean字段名
      * @param flagValue 标记value是否是字段名称
 	 * @return SQL对象
 	 */
@@ -674,13 +806,13 @@ public class ComplexQuerySQL implements SQL{
 		if(value == null && !flagValue)
 			return andNotNull(fieldName);
 
-		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.NEQ, flagValue);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.NEQ, flagValue, false);
 	}
 	
 	/**
 	 * 条件and !=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
@@ -689,118 +821,231 @@ public class ComplexQuerySQL implements SQL{
 	}
 	
 	/**
+	 * 条件and !=
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andNotEqAlias(String fieldName, Object value){
+		if(value == null)
+			return andNotNullAlias(fieldName);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.NEQ, false, true);
+	}
+	
+	/**
 	 * 条件and is not null
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andNotNull(String fieldName){
-		return NULL(fieldName, ConnectorEnum.AND, OperatorEnum.IS_NOT_NULL);
+		return NULL(fieldName, ConnectorEnum.AND, OperatorEnum.IS_NOT_NULL, false);
+	}
+	
+	/**
+	 * 条件and is not null
+	 * 
+	 * @param fieldName bean字段名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andNotNullAlias(String fieldName){
+		return NULL(fieldName, ConnectorEnum.AND, OperatorEnum.IS_NOT_NULL, true);
 	}
 	
 	/**
 	 * 条件and >
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andGt(String fieldName, Object value){
-		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.GT, false);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.GT, false, false);
+	}
+	
+	/**
+	 * 条件and >
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andGtAlias(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.GT, false, true);
+	}
+	
+	
+	/**
+	 * 条件or >
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orGt(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.GT, false, false);
 	}
 	
 	/**
 	 * 条件or >
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
-	public ComplexQuerySQL orGt(String fieldName, Object value){
-		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.GT, false);
+	public ComplexQuerySQL orGtAlias(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.GT, false, true);
 	}
 	
 	/**
 	 * 条件and <
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andLt(String fieldName, Object value){
-		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.LT, false);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.LT, false, false);
+	}
+	
+	/**
+	 * 条件and <
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andLtAlias(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.LT, false, true);
 	}
 	
 	/**
 	 * 条件or <
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orLt(String fieldName, Object value){
-		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.LT, false);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.LT, false, false);
+	}
+	
+	/**
+	 * 条件or <
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orLtAlias(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.LT, false, true);
 	}
 	
 	/**
 	 * 条件and <=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andLe(String fieldName, Object value){
-		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.LE, false);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.LE, false, false);
+	}
+	
+	/**
+	 * 条件and <=
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andLeAlias(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.LE, false, true);
 	}
 	
 	/**
 	 * 条件or <=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orLe(String fieldName, Object value){
-		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.LE, false);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.LE, false,false);
+	}
+	
+	/**
+	 * 条件or <=
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orLeAlias(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.LE, false, true);
 	}
 	
 	/**
 	 * 条件and >=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andGe(String fieldName, Object value){
-		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.GE, false);
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.GE, false, false);
+	}
+	
+	/**
+	 * 条件and >=
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andGeAlias(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.AND, OperatorEnum.GE, false, true);
 	}
 	
 	/**
 	 * 条件or >=
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orGe(String fieldName, Object value){
-		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.GE, false);
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.GE, false, false);
+	}
+	
+	/**
+	 * 条件or >=
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orGeAlias(String fieldName, Object value){
+		return M(fieldName, value, ConnectorEnum.OR, OperatorEnum.GE, false, true);
 	}
 	
 	/**
 	 * 条件拼装
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 其对应值
 	 * @param connector 条件（and | or）
 	 * @param op 操作符（like not like）
+	 * @param useAlias 标记是否用的是别名作为条件， false: 不是， true：是
 	 * @return
 	 */
 	private ComplexQuerySQL _like(String fieldName, Object value
-			, ConnectorEnum connector, OperatorEnum op){
+			, ConnectorEnum connector, OperatorEnum op, boolean useAlias){
 		if(fieldName == null)
 			return this;
 		
-		String colName = SQLUtil.getColumnName(fieldName, table);
+		String colName = useAlias ? SQLUtil.getColumnName(fieldName) : SQLUtil.getColumnName(fieldName, table);
 		
 		value = (value == null ? "" :  value.toString()
 				.replace("%", "\\%").replace("_", "\\_"));
@@ -813,61 +1058,108 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 条件or like
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orLike(String fieldName, Object value){
-		return _like(fieldName, value, ConnectorEnum.OR, OperatorEnum.LIKE);
+		return _like(fieldName, value, ConnectorEnum.OR, OperatorEnum.LIKE, false);
+	}
+	
+	/**
+	 * 条件or like
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orLikeAlias(String fieldName, Object value){
+		return _like(fieldName, value, ConnectorEnum.OR, OperatorEnum.LIKE, true);
 	}
 	
 	/**
 	 * 条件and like
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andLike(String fieldName, Object value){
-		return _like(fieldName, value, ConnectorEnum.AND, OperatorEnum.LIKE);
+		return _like(fieldName, value, ConnectorEnum.AND, OperatorEnum.LIKE, false);
+	}
+	
+	/**
+	 * 条件and like
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andLikeAlias(String fieldName, Object value){
+		return _like(fieldName, value, ConnectorEnum.AND, OperatorEnum.LIKE, true);
 	}
 	
 	/**
 	 * 条件or not like
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orNotLike(String fieldName, Object value){
-		return _like(fieldName, value, ConnectorEnum.OR, OperatorEnum.NLIKE);
+		return _like(fieldName, value, ConnectorEnum.OR, OperatorEnum.NLIKE, false);
+	}
+	
+	/**
+	 * 条件or not like
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orNotLikeAlias(String fieldName, Object value){
+		return _like(fieldName, value, ConnectorEnum.OR, OperatorEnum.NLIKE, true);
 	}
 	
 	/**
 	 * 条件and not like
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andNotLike(String fieldName, Object value){
-		return _like(fieldName, value, ConnectorEnum.AND, OperatorEnum.NLIKE);
+		return _like(fieldName, value, ConnectorEnum.AND, OperatorEnum.NLIKE, false);
+	}
+	
+	/**
+	 * 条件and not like
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andNotLikeAlias(String fieldName, Object value){
+		return _like(fieldName, value, ConnectorEnum.AND, OperatorEnum.NLIKE, true);
 	}
 	
 	/**
 	 * in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param values 对应的值
 	 * @param op 操作符（in | not in）
 	 * @param connector (or | and)
+	 * @param userAlias
+	 * @param values
 	 * @return
 	 */
 	private ComplexQuerySQL _in(String fieldName, OperatorEnum op, 
-			ConnectorEnum connector,  Object... values){
+			ConnectorEnum connector, boolean userAlias, Object... values){
 		if(fieldName == null || values == null || values.length == 0)
 			return this;
-		String colName = SQLUtil.getColumnName(fieldName, table);
+		String colName = userAlias ? SQLUtil.getColumnName(fieldName)
+				: SQLUtil.getColumnName(fieldName, table);
 		
 		_deepIn(colName, op, connector, values);
 		
@@ -904,69 +1196,137 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 条件and in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andIn(String fieldName, Object... values){
-		return _in(fieldName, OperatorEnum.IN, ConnectorEnum.AND, values);
+		return _in(fieldName, OperatorEnum.IN, ConnectorEnum.AND, false, values);
+	}
+	
+	/**
+	 * 条件and in
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andInAlias(String fieldName, Object... values){
+		return _in(fieldName, OperatorEnum.IN, ConnectorEnum.AND, true, values);
 	}
 
 	/**
 	 * 条件or in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orIn(String fieldName, Object... values){
-		return _in(fieldName, OperatorEnum.IN, ConnectorEnum.OR, values);
+		return _in(fieldName, OperatorEnum.IN, ConnectorEnum.OR, false, values);
+	}
+	
+	/**
+	 * 条件or in
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orInAlias(String fieldName, Object... values){
+		return _in(fieldName, OperatorEnum.IN, ConnectorEnum.OR, true, values);
 	}
 	
 	/**
 	 * 条件or not in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param values 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orNotIn(String fieldName, Object... values){
-		return _in(fieldName, OperatorEnum.NIN, ConnectorEnum.OR, values);
+		return _in(fieldName, OperatorEnum.NIN, ConnectorEnum.OR, false, values);
+	}
+	
+	/**
+	 * 条件or not in
+	 * 
+	 * @param fieldName bean字段名
+	 * @param values 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orNotInAlias(String fieldName, Object... values){
+		return _in(fieldName, OperatorEnum.NIN, ConnectorEnum.OR, true, values);
 	}
 	
 	/**
 	 * 条件and not in
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param values 对应的值
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andNotIn(String fieldName, Object... values){
-		return _in(fieldName, OperatorEnum.NIN, ConnectorEnum.AND, values);
+		return _in(fieldName, OperatorEnum.NIN, ConnectorEnum.AND, false, values);
+	}
+	
+	/**
+	 * 条件and not in
+	 * 
+	 * @param fieldName bean字段名
+	 * @param values 对应的值
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andNotInAlias(String fieldName, Object... values){
+		return _in(fieldName, OperatorEnum.NIN, ConnectorEnum.AND, true, values);
 	}
 	
 	/**
 	 * 条件or between
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value1 对应的值1
 	 * @param value2 对应的值2
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orBetween(String fieldName, Object value1, Object value2){
-		return between(fieldName, ConnectorEnum.OR, OperatorEnum.BETWEEN, value1, value2);
+		return between(fieldName, ConnectorEnum.OR, OperatorEnum.BETWEEN, value1, value2, false);
+	}
+	
+	/**
+	 * 条件or between
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value1 对应的值1
+	 * @param value2 对应的值2
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orBetweenAlias(String fieldName, Object value1, Object value2){
+		return between(fieldName, ConnectorEnum.OR, OperatorEnum.BETWEEN, value1, value2, true);
 	}
 	
 	/**
 	 * 条件and between
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value1 对应的值1
 	 * @param value2 对应的值2
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andBetween(String fieldName, Object value1, Object value2){
-		return between(fieldName, ConnectorEnum.AND, OperatorEnum.BETWEEN, value1, value2);
+		return between(fieldName, ConnectorEnum.AND, OperatorEnum.BETWEEN, value1, value2, false);
+	}
+	
+	/**
+	 * 条件and between
+	 * 
+	 * @param fieldName bean字段名
+	 * @param value1 对应的值1
+	 * @param value2 对应的值2
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andBetweenAlias(String fieldName, Object value1, Object value2){
+		return between(fieldName, ConnectorEnum.AND, OperatorEnum.BETWEEN, value1, value2, true);
 	}
 
 	/**
@@ -977,13 +1337,15 @@ public class ComplexQuerySQL implements SQL{
 	 * @param operator
 	 * @param value1
 	 * @param value2
+	 * @param useAlias 标记是否用的是别名作为条件， false: 不是， true：是
 	 * @return
 	 */
 	private ComplexQuerySQL between(String fieldName, ConnectorEnum condition,
-			OperatorEnum operator, Object value1, Object value2) {
+			OperatorEnum operator, Object value1, Object value2, boolean useAlias) {
 		if(fieldName == null)
 			return this;
-		String colName = SQLUtil.getColumnName(fieldName, table);
+		String colName = useAlias ? SQLUtil.getColumnName(fieldName)
+				: SQLUtil.getColumnName(fieldName, table);
 		
 		fieldItems.add(new ComplexQueryFieldItem(condition, operator, colName, 
 				new Object[]{value1, value2}, null));
@@ -994,25 +1356,49 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 条件or not between
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value1 对应的值1
 	 * @param value2 对应的值2
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL orNotBetween(String fieldName, Object value1, Object value2){
-		return between(fieldName, ConnectorEnum.OR, OperatorEnum.NBETWEEN, value1, value2);
+		return between(fieldName, ConnectorEnum.OR, OperatorEnum.NBETWEEN, value1, value2, false);
+	}
+	
+	/**
+	 * 条件or not between
+	 * 
+	 * @param alias 字段名
+	 * @param value1 对应的值1
+	 * @param value2 对应的值2
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL orNotBetweenAlias(String alias, Object value1, Object value2){
+		return between(alias, ConnectorEnum.OR, OperatorEnum.NBETWEEN, value1, value2, true);
 	}
 	
 	/**
 	 * 条件and not between
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param value1 对应的值1
 	 * @param value2 对应的值2
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL andNotBetween(String fieldName, Object value1, Object value2){
-		return between(fieldName, ConnectorEnum.AND, OperatorEnum.NBETWEEN, value1, value2);
+		return between(fieldName, ConnectorEnum.AND, OperatorEnum.NBETWEEN, value1, value2, false);
+	}
+	
+	/**
+	 * 条件and not between
+	 * 
+	 * @param alias 字段别名
+	 * @param value1 对应的值1
+	 * @param value2 对应的值2
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL andNotBetweenAlias(String alias, Object value1, Object value2){
+		return between(alias, ConnectorEnum.AND, OperatorEnum.NBETWEEN, value1, value2, true);
 	}
 
 	public List<ComplexQueryFieldItem> getFieldItems() {
@@ -1065,15 +1451,16 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * order by
 	 * 
-	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名
 	 * @param orderType 排序方式（asc | desc）
+	 * @param useAlias 标记是否用的是别名作为条件， false: 不是， true：是
 	 * @return
 	 */
-	private ComplexQuerySQL orderBy(String orderType, String... fieldNames){
+	private ComplexQuerySQL orderBy(String orderType, boolean useAlias, String... fieldNames){
 		if(!XLPArrayUtil.isEmpty(fieldNames)){
 			String colName;
 			for (String name : fieldNames) {
-				colName = SQLUtil.getColumnName(name, table, false); 
+				colName = useAlias ? SQLUtil.getColumnName(name) : SQLUtil.getColumnName(name, table); 
 				getTopComplexQuerySQL().sortFields.put(colName, orderType);
 			}
 		}
@@ -1083,27 +1470,47 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 排序升序
 	 * 
-	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL asc(String... fieldNames){
-		return orderBy(ASC, fieldNames);
+		return orderBy(ASC, false, fieldNames);
+	}
+	
+	/**
+	 * 排序升序
+	 * 
+	 * @param alias 字段别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL ascAlias(String... alias){
+		return orderBy(ASC, true, alias);
 	}
 	
 	/**
 	 * 排序降序
 	 * 
-	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL desc(String... fieldNames){
-		return orderBy(DESC, fieldNames);
+		return orderBy(DESC, false, fieldNames);
+	}
+	
+	/**
+	 * 排序升序
+	 * 
+	 * @param alias 字段别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL descAlias(String... alias){
+		return orderBy(DESC, true, alias);
 	}
 
 	/**
 	 * group by
 	 * 
-	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段别名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL groupBy(String... fieldNames){
@@ -1118,9 +1525,26 @@ public class ComplexQuerySQL implements SQL{
 	}
 	
 	/**
+	 * group by
+	 * 
+	 * @param alias 字段别名
+	 * @return SQL对象
+	 */
+	public ComplexQuerySQL groupByAlias(String... alias){
+		if(!XLPArrayUtil.isEmpty(alias)){
+			String colName;
+			for (String name : alias) {
+				colName = SQLUtil.getColumnName(name); 
+				getTopComplexQuerySQL().groupFields.add(colName);
+			}
+		}
+		return this;
+	}
+	
+	/**
 	 * max
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param alias 别名
 	 * @return SQL对象
 	 */
@@ -1132,7 +1556,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * max
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL max(String fieldName){
@@ -1142,7 +1566,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * min
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param alias 别名
 	 * @return SQL对象
 	 */
@@ -1154,7 +1578,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * min
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL min(String fieldName){
@@ -1164,7 +1588,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * sum
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param alias 别名
 	 * @return SQL对象
 	 */
@@ -1176,7 +1600,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * sum
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL sum(String fieldName){
@@ -1186,7 +1610,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * avg
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param alias 别名
 	 * @return SQL对象
 	 */
@@ -1198,7 +1622,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * avg
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL avg(String fieldName){
@@ -1208,7 +1632,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * count(fieldName)
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param alias 别名
 	 * @return SQL对象
 	 */
@@ -1220,7 +1644,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * count(fieldName)
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL count(String fieldName){
@@ -1230,7 +1654,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * count(*)
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @param alias 别名
 	 * @return SQL对象
 	 */
@@ -1245,7 +1669,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * count(*)
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL count(){
@@ -1255,7 +1679,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * count(distinctCount xx, yyy)
 	 * 
-	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名
 	 * @param alias 别名
 	 * @return SQL对象
 	 */
@@ -1268,7 +1692,7 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * count(distinctCount xx, yyy)
 	 * 
-	 * @param fieldNames bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldNames bean字段名
 	 * @return SQL对象
 	 */
 	public ComplexQuerySQL distinctCount(String... fieldNames){
@@ -1298,14 +1722,14 @@ public class ComplexQuerySQL implements SQL{
 	/**
 	 * 设置要查询出的字段名称，多个字段可连续调用
 	 * 
-	 * @param fieldName 字段名称 也可以是数据库中表的列名，但最好是bean字段名, 也可以是固定值
+	 * @param fieldName 字段名称 
 	 * @param alias 字段对应的别名
 	 * @return
 	 */
-	public ComplexQuerySQL properties(String fieldName, String alias){
+	public ComplexQuerySQL property(String fieldName, String alias){
 		if (!XLPStringUtil.isEmpty(fieldName)) {
-			String colName = SQLUtil.getColumnName(fieldName, table, false);
-			Map<String, String> map = new HashMap<String, String>(2);
+			String colName = SQLUtil.getColumnName(fieldName, table);
+			Map<String, Object> map = new HashMap<String, Object>(2);
 			map.put(QUERY_FIELD_ALIAS_KEY, alias);
 			map.put(QUERY_FIELD_NAME_KEY, colName);
 			getTopComplexQuerySQL().queryFields.add(map);
@@ -1314,13 +1738,48 @@ public class ComplexQuerySQL implements SQL{
 	}
 	
 	/**
-	 * 设置要查询出的字段名称，多个字段可连续调用
+	 * 已固定值的字段作为查询出的数据
 	 * 
-	 * @param fieldName 字段名称 也可以是数据库中表的列名，但最好是bean字段名, 也可以是固定值
+	 * @param defaultValue 固定值 
+	 * @param alias 别名
 	 * @return
 	 */
-	public ComplexQuerySQL properties(String fieldName){
-		return properties(fieldName, null);
+	public ComplexQuerySQL propertyValue(Object defaultValue, String alias){
+		Map<String, Object> map = new HashMap<String, Object>(2);
+		map.put(QUERY_FIELD_ALIAS_KEY, alias);
+		map.put(QUERY_FIELD_NAME_KEY, (defaultValue == null || XLPPackingTypeUtil.isNumber(defaultValue)
+				|| defaultValue instanceof Boolean) ? defaultValue : "'" + defaultValue + "'");
+		getTopComplexQuerySQL().queryFields.add(map);
+		return this;
+	}
+	
+	/**
+	 * 设置要查询出的字段名称，多个字段可连续调用
+	 * 
+	 * @param alias 字段名称对应的 别名
+	 * @param alias 字段对应的别名
+	 * @return
+	 */
+	public ComplexQuerySQL propertyAlias(String alias){
+		if (!XLPStringUtil.isEmpty(alias)) {
+			Map<String, Object> map = new HashMap<String, Object>(2);
+			map.put(QUERY_FIELD_NAME_KEY, alias);
+			getTopComplexQuerySQL().queryFields.add(map);
+		}
+		return this;
+	}
+	
+	/**
+	 * 设置要查询出的字段名称，多个字段可连续调用
+	 * 
+	 * @param fieldNames 字段名称了，例如 xxx, yy.xxx格式
+	 * @return
+	 */
+	public ComplexQuerySQL properties(String... fieldNames){
+		for (String name : fieldNames) {
+			property(name, null);
+		}
+		return this;
 	}
 	
 	/**
@@ -1387,13 +1846,6 @@ public class ComplexQuerySQL implements SQL{
 		return havingFieldItems;
 	}
 
-	/**
-	 * @return 是否统计数据条数
-	 */
-	public boolean isExeCount() {
-		return exeCount;
-	}
-	
 	public Map<String, String> getSortFields() {
 		return sortFields;
 	}
@@ -1414,25 +1866,25 @@ public class ComplexQuerySQL implements SQL{
 			
 			@Override
 			public String getSql() {
-				sql.exeCount = true;
-				String sqlStr = sql.getSql();
-				sql.exeCount = false;
-				return sqlStr;
+				StringBuilder sb = new StringBuilder(getParamSql());
+				String sql = SQLUtil.fillWithParams(sb, getParams());
+				if (LOGGER.isDebugEnabled()) {
+					LOGGER.debug("执行SQL语句是：" + sql);
+				}
+				return sql;
 			}
 			
 			@Override
 			public Object[] getParams() {
-				sql.exeCount = true;
-				Object[] params = sql.getParams();
-				sql.exeCount = false;
-				return params;
+				return SQLParamUtil.getSqlParams(sql, true);
 			}
 			
 			@Override
 			public String getParamSql() {
-				sql.exeCount = true;
-				String sqlStr = sql.getParamSql();
-				sql.exeCount = false;
+				String sqlStr = SQLPartUtil.formatTablePartSql(sql, true);
+				if(LOGGER.isDebugEnabled()){
+					LOGGER.debug("执行语句是：" + sqlStr);
+				}
 				return sqlStr;
 			}
 			
@@ -1441,7 +1893,6 @@ public class ComplexQuerySQL implements SQL{
 				return sql.getEntityClass();
 			}
 		};
-		topComplexQuerySQL.exeCount = false;
 		return sql;
 	}
 }

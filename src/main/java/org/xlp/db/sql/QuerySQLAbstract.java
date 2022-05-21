@@ -46,16 +46,14 @@ public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T>{
 	/**
 	 * order by
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @param orderType 排序方式（asc | desc）
 	 * @return
 	 */
 	private QuerySQLAbstract<T> orderBy(String fieldName, String orderType){
 		if(fieldName == null)
 			return this;
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
-		
+		String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 		sortFields.put(colName, orderType);
 		
 		return this;
@@ -64,7 +62,7 @@ public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T>{
 	/**
 	 * 排序升序
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @return SQL对象
 	 */
 	public QuerySQLAbstract<T> asc(String fieldName){
@@ -74,7 +72,7 @@ public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T>{
 	/**
 	 * 排序降序
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @return SQL对象
 	 */
 	public QuerySQLAbstract<T> desc(String fieldName){
@@ -84,15 +82,13 @@ public abstract class QuerySQLAbstract<T> extends OneTableSQLAbstract<T>{
 	/**
 	 * group by
 	 * 
-	 * @param fieldName bean字段名，也可以是数据库中表的列名，但最好是bean字段名
+	 * @param fieldName bean字段名，但最好是bean字段名
 	 * @return SQL对象
 	 */
 	public QuerySQLAbstract<T> groupBy(String fieldName){
 		if(fieldName == null)
 			return this;
-		String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-		colName = (colName == null ? fieldName : colName);
-		
+		String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 		groupFields.add(colName);
 		return this;
 	}

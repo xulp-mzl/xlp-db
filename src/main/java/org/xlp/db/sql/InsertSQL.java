@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.xlp.db.exception.EntityException;
+import org.xlp.db.sql.table.Table;
 import org.xlp.db.tableoption.annotation.XLPColumn;
 import org.xlp.db.tableoption.key.CompoundPrimaryKey;
 import org.xlp.db.utils.BeanUtil;
@@ -33,6 +34,11 @@ public class InsertSQL extends SQLAbstract {
 	private List<Object> values;
 	// 主键信息对象
 	private CompoundPrimaryKey primaryKey;
+	
+	/**
+	 * 表对象
+	 */
+	private Table<?> table;
 
 	/**
 	 * 用bean对象构建此对象
@@ -82,6 +88,7 @@ public class InsertSQL extends SQLAbstract {
 	@SuppressWarnings("all")
 	@Override
 	protected <T> void init(T bean) throws EntityException {
+		table = new Table<>(bean.getClass());
 		this.primaryKey = new CompoundPrimaryKey(bean);
 		// 含有XLPColumn注解属性描述数组
 		PropertyDescriptor<T>[] pds = new JavaBeanPropertiesDescriptor(
@@ -182,8 +189,7 @@ public class InsertSQL extends SQLAbstract {
 	 */
 	public InsertSQL insert(String fieldName, Object value) {
 		if (!XLPStringUtil.isEmpty(fieldName)) {
-			String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-			colName = (colName == null ? fieldName : colName);
+			String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 			columnNames.add(colName);
 			values.add(value);
 		}
@@ -210,8 +216,7 @@ public class InsertSQL extends SQLAbstract {
 	 */
 	public InsertSQL removeInsert(String fieldName) {
 		if (!XLPStringUtil.isEmpty(fieldName)) {
-			String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-			colName = (colName == null ? fieldName : colName);
+			String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 			int size = columnNames.size();
 			for (int i = 0; i < size; i++) {
 				if(colName.equals(columnNames.get(i))){
@@ -311,5 +316,12 @@ public class InsertSQL extends SQLAbstract {
 	@Override
 	public Class<?> getEntityClass() {
 		return beanClass;
+	}
+
+	/**
+	 * @return the table
+	 */
+	public Table<?> getTable() {
+		return table;
 	}
 }

@@ -105,7 +105,7 @@ public abstract class SQLStatisticsAbstract implements SQLStatisticsType{
 			.append(SQLUtil.getColumnName(getFieldName(), table))
 			.append(SQL.RIGHT_BRACKET);
 		if (!XLPStringUtil.isEmpty(getAlias())) {
-			sb.append(" ").append(getAlias());
+			sb.append(" ").append(SQLUtil.getColumnName(getAlias()));
 		}
 		return sb.toString();
 	}

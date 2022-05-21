@@ -92,8 +92,7 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public QuerySQL<T> queryName(String fieldName) {
 		if (!XLPStringUtil.isEmpty(fieldName)) {
-			String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-			colName = (colName == null ? fieldName : colName);
+			String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 			columnNames.add(colName);
 		}
 		return this;
@@ -117,8 +116,7 @@ public class QuerySQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public QuerySQL<T> removeQuery(String fieldName) {
 		if (!XLPStringUtil.isEmpty(fieldName)) {
-			String colName = BeanUtil.getFieldAlias(beanClass, fieldName);
-			colName = (colName == null ? fieldName : colName);
+			String colName = BeanUtil.getFieldAlias(getTable(), fieldName);
 			columnNames.remove(colName);
 		}
 		return this;

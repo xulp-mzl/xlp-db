@@ -31,7 +31,7 @@ public class SumSQL<T> extends QuerySQLAbstract<T> {
 	 */
 	protected SumSQL(T bean, String sumFieldName) throws EntityException {
 		super(bean);
-		this.sumFieldName = BeanUtil.getFieldAlias(beanClass, sumFieldName);
+		this.sumFieldName = BeanUtil.getFieldAlias(getTable(), sumFieldName);
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class SumSQL<T> extends QuerySQLAbstract<T> {
 	 */
 	public SumSQL(Class<T> beanClass, String sumFieldName) throws EntityException {
 		super(beanClass);
-		this.sumFieldName = BeanUtil.getFieldAlias(beanClass, sumFieldName);
+		this.sumFieldName = BeanUtil.getFieldAlias(getTable(), sumFieldName);
 	}
 
 	/**
