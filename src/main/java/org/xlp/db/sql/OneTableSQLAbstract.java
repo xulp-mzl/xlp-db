@@ -7,6 +7,7 @@ import java.util.Stack;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xlp.assertion.AssertUtils;
 import org.xlp.db.exception.EntityException;
 import org.xlp.db.sql.item.ConnectorEnum;
 import org.xlp.db.sql.item.FieldItem;
@@ -596,6 +597,66 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 	}
 	
 	/**
+	 * exists语句
+	 * 
+	 * @param query
+	 * @return
+	 */
+	private OneTableSQLAbstract<T> exists(Query query, ConnectorEnum connector,
+			OperatorEnum operator){
+		fieldItems.add(new FieldItem(connector, operator, null, query, query.getTable()));
+		return this;
+	}
+	
+	/**
+	 * and exists
+	 * 
+	 * @param query
+	 * @throws NullPointerException 假如第参数为null，则抛出该异常
+	 * @return
+	 */
+	public OneTableSQLAbstract<T> andExists(Query query){
+		AssertUtils.isNotNull(query, "query parameter is null!");
+		return exists(query, ConnectorEnum.AND, OperatorEnum.EXISTS);
+	}
+	
+	/**
+	 * or exists
+	 * 
+	 * @param query
+	 * @throws NullPointerException 假如第参数为null，则抛出该异常
+	 * @return
+	 */
+	public OneTableSQLAbstract<T> orExists(Query query){
+		AssertUtils.isNotNull(query, "query parameter is null!");
+		return exists(query, ConnectorEnum.OR, OperatorEnum.EXISTS);
+	}
+	
+	/**
+	 * and not exists
+	 * 
+	 * @param query
+	 * @throws NullPointerException 假如第参数为null，则抛出该异常
+	 * @return
+	 */
+	public OneTableSQLAbstract<T> andNotExists(Query query){
+		AssertUtils.isNotNull(query, "query parameter is null!");
+		return exists(query, ConnectorEnum.AND, OperatorEnum.NOT_EXISTS);
+	}
+	
+	/**
+	 * or not exists语句
+	 * 
+	 * @param query
+	 * @throws NullPointerException 假如第参数为null，则抛出该异常
+	 * @return
+	 */
+	public OneTableSQLAbstract<T> orNotExists(Query query){
+		AssertUtils.isNotNull(query, "query parameter is null!");
+		return exists(query, ConnectorEnum.OR, OperatorEnum.NOT_EXISTS);
+	}
+	
+	/**
 	 * 得到预处理值数组
 	 * 
 	 * @return
@@ -620,6 +681,10 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 			case BETWEEN:
 			case NBETWEEN:
 				 valueList.addAll(Arrays.asList(fieldItem.getValues())); 
+				break;
+			case NOT_EXISTS:
+			case EXISTS:
+				valueList.addAll(Arrays.asList(((SQL)fieldItem.getValue()).getParams()));
 				break;
 			default:
 				break;
@@ -676,6 +741,15 @@ public abstract class OneTableSQLAbstract<T> implements SQL{
 			case NIN:
 				fillPartSql(firstCondition, sb, fieldItem, tableAlias, stack);
 				sb.append(SQLUtil.formatInSql(fieldItem.getValues().length)); 
+				firstCondition = false;
+				break;
+			case NOT_EXISTS:
+			case EXISTS:
+				if (!firstCondition) {
+					sb.append(" ").append(fieldItem.getConnector().getConnector()).append(" ");
+				}
+				sb.append(fieldItem.getOperator().getOperator()).append(SQL.LEFT_BRACKET)
+					.append(((SQL)fieldItem.getValue()).getParamSql()).append(SQL.RIGHT_BRACKET);
 				firstCondition = false;
 				break;
 			default:
