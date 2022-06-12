@@ -130,6 +130,14 @@ import org.xlp.utils.XLPStringUtil;
 				currentValue = getCurrentKeyNumber(name);
 			}
 		}
+		if (type == PrimaryKeyType.UUID && XLPStringUtil.isEmpty((String) value)) {
+			currentValue = XLPStringUtil.uuidL();
+		} else if (isToObtainCurrentKeyValue && type == PrimaryKeyType.AUTO
+				&& (value == null || (isPrimitive && value.toString().equals("0")))) {
+			currentValue = getCurrentKeyNumber(name);
+		} else {
+			currentValue = value;
+		}
 		return currentValue;
 	}
 	

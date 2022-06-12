@@ -142,7 +142,7 @@ public final class CompoundPrimaryKey extends KeyAbstract{
 			types[i] = xlpId.type();
 			isPrimitives[i] = pds[i].getFiledClassType().isPrimitive();
 			
-			if (types[i] == PrimaryKeyType.UUID && values[i] == null) {
+			if (types[i] == PrimaryKeyType.UUID && XLPStringUtil.isEmpty((String) values[i])) {
 				currentValues[i] = XLPStringUtil.uuidL();
 			} else if (isToObtainCurrentKeyValue && types[i] == PrimaryKeyType.AUTO
 					&& (values[i] == null || (isPrimitives[i] && values[i].toString().equals("0")))) {
