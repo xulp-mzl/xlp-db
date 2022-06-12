@@ -142,15 +142,14 @@ public final class CompoundPrimaryKey extends KeyAbstract{
 			types[i] = xlpId.type();
 			isPrimitives[i] = pds[i].getFiledClassType().isPrimitive();
 			
-			if(isToObtainCurrentKeyValue)
-				if (types[i] == PrimaryKeyType.UUID && values[i] == null) {
-					currentValues[i] = XLPStringUtil.uuidL();
-				}else if (types[i] == PrimaryKeyType.AUTO && (values[i] == null ||
-						(isPrimitives[i] && values[i].toString().equals("0")))) {
-					currentValues[i] = getCurrentKeyNumber(names[i]);
-				}else {
-					currentValues[i] = values[i];
-				}
+			if (types[i] == PrimaryKeyType.UUID && values[i] == null) {
+				currentValues[i] = XLPStringUtil.uuidL();
+			} else if (isToObtainCurrentKeyValue && types[i] == PrimaryKeyType.AUTO
+					&& (values[i] == null || (isPrimitives[i] && values[i].toString().equals("0")))) {
+				currentValues[i] = getCurrentKeyNumber(names[i]);
+			} else {
+				currentValues[i] = values[i];
+			}
 		}
 	}
 }

@@ -20,6 +20,7 @@ import org.xlp.db.tableoption.annotation.XLPColumn;
 import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.tableoption.annotation.XLPId;
 import org.xlp.db.tableoption.xlpenum.DataType;
+import org.xlp.db.tableoption.xlpenum.PrimaryKeyType;
 import org.xlp.db.tableoption.xlpenum.TableType;
 import org.xlp.db.utils.XLPDBUtil;
 import org.xlp.javabean.JavaBeanPropertiesDescriptor;
@@ -594,12 +595,21 @@ public class MYSqlTableCreator implements TableCreator{
 			boolean isNull = xlpId.isNull();
 			String defaultValue = xlpId.defaultValue();
 			String comment = xlpId.descriptor();
+			
+			//主键类型
+			PrimaryKeyType keyType = xlpId.type();
+			
 			addTypeSql(sb, dataType, len, decimalLength);
 			addZeroFillSql(sb, dataType, zeroFill);
 			// 追加字段是否不为空
 			if (isNull) {
 				sb.append("NOT NULL ");
 			}
+			// 添加自增功能
+			if (keyType == PrimaryKeyType.AUTO) {
+				sb.append("auto_increment ");
+			}
+			
 			addDefaultValueSql(sb, dataType, defaultValue);
 			// 判断字段描述是否为空，假如非空，追加字段描述
 			if (!XLPStringUtil.isEmpty(comment)) {

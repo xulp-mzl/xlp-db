@@ -49,7 +49,7 @@ public abstract class KeyAbstract {
 	 *             假如参数为null，抛出该异常
 	 */
 	public <T> KeyAbstract(T bean) throws EntityException {
-		this(bean, true);
+		this(bean, false);
 	}
 
 	/**

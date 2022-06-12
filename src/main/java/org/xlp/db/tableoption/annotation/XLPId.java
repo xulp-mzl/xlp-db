@@ -26,7 +26,10 @@ import org.xlp.utils.XLPStringUtil;
 public @interface XLPId {
 	//column的名称
 	public String columnName() default "";//主键对应的列名称
-	public PrimaryKeyType type() default PrimaryKeyType.AUTO;//默认主键值为自增长
+	/**
+	 * 主键类型
+	 */
+	public PrimaryKeyType type() default PrimaryKeyType.NORMAL;
 	public String descriptor() default "";//描述
 	
 	//以下字段用来根据实体类创建相应的表
