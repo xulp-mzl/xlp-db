@@ -90,16 +90,14 @@ public final class SQLUtil {
 	 * @return
 	 */
 	static String formatInSql(int length){
-		StringBuilder sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder(SQL.LEFT_BRACKET);
 		for (int i = 0; i < length; i++) {
-			if (i == 0) {
-				sb.append(SQL.LEFT_BRACKET).append(SQL.INTERROGATION);
+			if (i != 0) {
+				sb.append(SQL.COMMA);
 			}
-			sb.append(SQL.COMMA).append(SQL.INTERROGATION);
+			sb.append(SQL.INTERROGATION);
 		}
-		if (length > 0) {
-			sb.append(SQL.RIGHT_BRACKET);
-		}
+		sb.append(SQL.RIGHT_BRACKET);
 		return sb.toString();
  	}
 	
