@@ -101,6 +101,9 @@ public class UpdateSQL<T> extends OneTableSQLAbstract<T>{
 				if (maxLen != NO_STR_VALUE_MAX_LEN) {
 					value = XLPStringUtil.getSuitLenString((String)value, maxLen);
 				}
+				// 处理枚举类型
+			} else if (filedTypeClass.isEnum() && value != null) {
+				value = value.toString();
 			}
 			updateValues.add(value);
 		}

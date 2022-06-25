@@ -16,6 +16,7 @@ import org.xlp.javabean.PropertyDescriptor;
 import org.xlp.javabean.convert.mapandbean.MapValueProcesser;
 import org.xlp.javabean.processer.ValueProcesser;
 import org.xlp.utils.XLPDateUtil;
+import org.xlp.utils.XLPOutputInfoUtil;
 
 
 /**
@@ -159,9 +160,17 @@ public class DefaultResult implements Result{
 			
 			Object value = processColumnValue(i, propertyType, rs);
 			
+			if (propertyType.isEnum() && value != null) {
+				//处理枚举类型映射问题
+				try {
+					value = propertyType.getMethod("valueOf", String.class).invoke(propertyType, value.toString());
+				} catch (Exception e) {
+					XLPOutputInfoUtil.println("[" + value + "]转换成[" + pd.getFieldName() + "]字段枚举类型值失败");
+				}
+			}
+			
 			if (propertyType != null && propertyType.isPrimitive() &&
 					value == null) {
-				 
 			   // 当数据库中查出的数据为SQL NULL时，给bean属性为基本类型设置以下默认值
 				value = ValueProcesser.PRIMITIVE_DEFAULTS.get(propertyType);
 			}
@@ -198,6 +207,7 @@ public class DefaultResult implements Result{
 		try {
 			pd.executeWriteMethod(bean, value);
 		} catch (Exception e) {
+			XLPOutputInfoUtil.println("调用[" + pd.getFieldName() + " ]该字段的写方法失败");
 		}
 	}
 
