@@ -100,7 +100,7 @@ public class Table<T> {
 		String colName = null;
 		for (int j = 0; j < len; j++, i++) {
 			colName = pds[j].getFieldAnnotation(XLPColumn.class).columnName();
-			colName = XLPStringUtil.isEmpty(colName) ? pds[i].getFieldName() : colName;
+			colName = XLPStringUtil.isEmpty(colName) ? pds[j].getFieldName() : colName;
 			allColumnNames[i] = colName; //初始化表所有所有字段数组（主键字段在最前）
 			columnNames[j] = colName; //表所有所有字段数组除key对应字段外
 			beanFieldNameMapperDbColumnNameMap.put(pds[j].getFieldName(), colName);
