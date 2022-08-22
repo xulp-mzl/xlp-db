@@ -1,5 +1,7 @@
 package org.xlp;
 
+import org.xlp.db.sql.ComplexQuerySQL;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
