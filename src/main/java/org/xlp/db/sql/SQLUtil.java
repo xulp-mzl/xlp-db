@@ -160,6 +160,7 @@ public final class SQLUtil {
 		return columnName.replaceAll("\\s", XLPStringUtil.EMPTY)
 			.replace("'", XLPStringUtil.EMPTY)
 			.replace("--", XLPStringUtil.EMPTY)
-			.replace("\\", XLPStringUtil.EMPTY);
+			.replace("\\", XLPStringUtil.EMPTY)
+			.replace("#", XLPStringUtil.EMPTY);
 	}
 }
