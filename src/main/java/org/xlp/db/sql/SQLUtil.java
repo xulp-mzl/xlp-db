@@ -157,8 +157,7 @@ public final class SQLUtil {
 	 */
 	public static String getColumnName(String columnName){
 		AssertUtils.isNotNull(columnName, "columnName parameter is null or empty!");
-		return columnName.replaceAll("\\s", XLPStringUtil.EMPTY)
-			.replace("'", XLPStringUtil.EMPTY)
+		return columnName.replace("'", XLPStringUtil.EMPTY)
 			.replace("--", XLPStringUtil.EMPTY)
 			.replace("\\", XLPStringUtil.EMPTY)
 			.replace("#", XLPStringUtil.EMPTY);

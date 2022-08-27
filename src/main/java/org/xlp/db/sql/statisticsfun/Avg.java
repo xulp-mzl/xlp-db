@@ -1,7 +1,5 @@
 package org.xlp.db.sql.statisticsfun;
 
-import org.xlp.db.sql.table.Table;
-
 /**
  * <p>创建时间：2022年5月15日 下午5:46:24</p>
  * @author xlp
@@ -13,16 +11,16 @@ public class Avg extends SQLStatisticsAbstract{
 		super();
 	}
 
-	public Avg(Table<?> table, String fieldName, String alias) {
-		super(table, fieldName, alias);
+	public Avg( String fieldName, String alias) {
+		super(fieldName, alias);
 	}
 
-	public Avg(Table<?> table, String fieldName) {
-		super(table, fieldName);
+	public Avg(String fieldName) {
+		super(fieldName);
 	}
-
+	
 	@Override
-	public String getStatisticsPartSql() {
-		return getStatisticsPartSql("avg");
+	public String getSQLMenthodName() {
+		return "avg(%s)";
 	}
 }

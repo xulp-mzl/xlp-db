@@ -1,7 +1,5 @@
 package org.xlp.db.sql.statisticsfun;
 
-import org.xlp.db.sql.table.Table;
-
 /**
  * <p>创建时间：2022年5月15日 下午5:46:24</p>
  * @author xlp
@@ -13,16 +11,16 @@ public class Sum extends SQLStatisticsAbstract{
 		super();
 	}
 
-	public Sum(Table<?> table, String fieldName, String alias) {
-		super(table, fieldName, alias);
+	public Sum(String fieldName, String alias) {
+		super(fieldName, alias);
 	}
 
-	public Sum(Table<?> table, String fieldName) {
-		super(table, fieldName);
+	public Sum(String fieldName) {
+		super(fieldName);
 	}
 
 	@Override
-	public String getStatisticsPartSql() {
-		return getStatisticsPartSql("sum");
+	public String getSQLMenthodName() {
+		return "sum(%s)";
 	}
 }

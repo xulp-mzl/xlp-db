@@ -21,10 +21,17 @@ public interface SQLStatisticsType {
 	 */
 	public void setAlias(String alias);
 	
+	
 	/**
-	 * 获取统计函数部分SQL片段
+	 * 获取统计函数名称，如：svg([column])
 	 * 
 	 * @return
 	 */
-	public String getStatisticsPartSql();
+	public String getSQLMenthodName();
+	
+	/**
+	 * 获取要统计字段的名称
+	 * @return
+	 */
+	public String getFieldName();
 }

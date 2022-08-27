@@ -1,11 +1,5 @@
 package org.xlp.db.sql.statisticsfun;
 
-import org.xlp.db.sql.SQL;
-import org.xlp.db.sql.SQLUtil;
-import org.xlp.db.sql.table.Table;
-import org.xlp.utils.XLPArrayUtil;
-import org.xlp.utils.XLPStringUtil;
-
 /**
  * <p>创建时间：2022年5月15日 下午5:46:24</p>
  * @author xlp
@@ -22,49 +16,21 @@ public class DistinctCount extends SQLStatisticsAbstract{
 		super();
 	}
 
-	public DistinctCount(Table<?> table, String fieldName, String alias) {
-		super(table, fieldName, alias);
+	public DistinctCount(String fieldName, String alias) {
+		super(fieldName, alias);
 	}
 
-	public DistinctCount(Table<?> table, String fieldName) {
-		super(table, fieldName);
+	public DistinctCount(String fieldName) {
+		super(fieldName);
 	}
 	
-	public DistinctCount(Table<?> table, String[] distinctFields, String alias) {
-		super(table, null, alias);
+	public DistinctCount(String[] distinctFields, String alias) {
+		super(null, alias);
 		this.distinctFields = distinctFields;
 	}
 
-	public DistinctCount(Table<?> table, String[] distinctFields) {
-		this(table, distinctFields, null);
-	}
-
-	@Override
-	public String getStatisticsPartSql() {
-		if (!XLPArrayUtil.isEmpty(distinctFields)) {
-			String tableAlias = SQLUtil.getTableAlias(getTable());
-			StringBuilder sb = new StringBuilder();
-			sb.append("count(distinct ");
-			for (int i = 0; i < distinctFields.length; i++) { 
-				if (i != 0) {
-					sb.append(SQL.COMMA);
-				}
-				sb.append(tableAlias).append(distinctFields[i]);
-			}
-			sb.append(SQL.RIGHT_BRACKET);
-			if (!XLPStringUtil.isEmpty(getAlias())) {
-				sb.append(" ").append(SQLUtil.getColumnName(getAlias()));
-			}
-			return sb.toString();
-		} else if (XLPStringUtil.isEmpty(getFieldName())) {
-			String countSql = "count(*) ";
-			if (!XLPStringUtil.isEmpty(getAlias())) {
-				countSql += SQLUtil.getColumnName(getAlias());
-			}
-			return countSql;
-		} else {
-			return getStatisticsPartSql("count");
-		}
+	public DistinctCount(String[] distinctFields) {
+		this(distinctFields, null);
 	}
 
 	/**
@@ -80,4 +46,11 @@ public class DistinctCount extends SQLStatisticsAbstract{
 	public void setDistinctFields(String... distinctFields) {
 		this.distinctFields = distinctFields;
 	}
+
+	@Override
+	public String getSQLMenthodName() {
+		return "count(%s)";
+	}
+	
+	
 }
