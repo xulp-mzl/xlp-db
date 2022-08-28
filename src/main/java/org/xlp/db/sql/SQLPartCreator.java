@@ -85,12 +85,14 @@ class SQLPartCreator {
 			joinConditionFieldsSql(sb, fieldItems);
 		}
 		
-		//拼接order by SQL片段
-		joinOrderBySql(complexQuerySQL, sb);
-		
-		//拼接limit语句
-		if (complexQuerySQL.getLimit() != null && !exeCount) {
-			sb.append(" limit ?,?");
+		if (!exeCount) {
+			//拼接order by SQL片段
+			joinOrderBySql(complexQuerySQL, sb);
+			
+			//拼接limit语句
+			if (complexQuerySQL.getLimit() != null) {
+				sb.append(" limit ?,?");
+			}
 		}
 		
 		return sb.toString();
