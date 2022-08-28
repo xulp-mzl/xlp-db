@@ -36,11 +36,11 @@ public class TestStack {
 		ComplexQuerySQL sql = ComplexQuerySQL.of(Account.class, "a");
 		System.out.println(sql.getParamSql());
 		sql.innerJoin(Account.class, "b").andEq("a.name", "b.id", true).group().andEq("a.name", "3")
-			.orEq("id", "4").endGroup()/*.limit(new Limit(1, 4))*/;
-		sql.andEq("name", "t").property("a.name", "kj");
+			.orEq("id", "4").endGroup().limit(new Limit(1, 4)).desc("a.id");
+		sql.andEq("name", "t").property("a.name", "kj").properties("b.name", "a.name");
 		System.out.println(sql.getParamSql());
 //		System.out.println(sql.getSql());
-//		System.out.println(sql.countSql().getParamSql());
+		System.out.println(sql.countSql().getParamSql());
 //		UnionSQL unionSQL = UnionSQL.of(sql);
 //		unionSQL.union(sql).limit(new Limit(0, 7));
 //		System.out.println("------");
