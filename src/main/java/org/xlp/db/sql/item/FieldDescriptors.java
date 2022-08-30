@@ -29,7 +29,7 @@ public class FieldDescriptors {
 	 * @param alias
 	 */
 	public void addAlias(String alias){
-		if (XLPStringUtil.isEmpty(alias)) {
+		if (!XLPStringUtil.isEmpty(alias)) {
 			aliasSet.add(alias);
 		}
 	}

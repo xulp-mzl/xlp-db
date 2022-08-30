@@ -179,7 +179,12 @@ class SQLPartCreator {
 		}
 		
 		// 拼接统计查询列
+		boolean start = true;
 		for (SQLStatisticsType sqlStatisticsType : sqlStatisticsTypes) {
+			if (!start) {
+				sb.append(SQL.COMMA);
+			}
+			start = false;
 			sb.append(" ");
 			if (sqlStatisticsType instanceof DistinctCount) {
 				formatCountStatisticsPartSql(sb, (DistinctCount) sqlStatisticsType);
@@ -188,7 +193,6 @@ class SQLPartCreator {
 			}
 		}
 		
-		boolean start = XLPCollectionUtil.isEmpty(sqlStatisticsTypes);
 		String alias, fieldName;
 		for (QueryColumnProperty queryColumnProperty : queryColumns) {
 			if (!start) {

@@ -37,7 +37,10 @@ public class TestStack {
 		System.out.println(sql.getParamSql());
 		sql.innerJoin(Account.class, "b").andEq("a.name", "b.id", true).group().andEq("a.name", "3")
 			.orEq("id", "4").endGroup().limit(new Limit(1, 4)).desc("a.id");
-		sql.andEq("name", "t").property("a.name", "kj").properties("b.name", "a.name");
+		sql.andEq("name", "t").property("a.name", "kj").properties("b.name", "a.name").distinct(true)
+			.avg("a.id").count("a.name", "n").having().andEq("n", 12).endHaving();
+		
+		
 		System.out.println(sql.getParamSql());
 //		System.out.println(sql.getSql());
 		System.out.println(sql.countSql().getParamSql());
