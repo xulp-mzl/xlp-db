@@ -647,6 +647,16 @@ public class MYSqlTableCreator implements TableCreator{
 			int len = xlpId.length();
 			len = len == NOT_DEFINE_LEN ? entity.primaryKeyLength() : len;
 			
+			//主键类型
+			PrimaryKeyType keyType = xlpId.type();
+			keyType = keyType == PrimaryKeyType.NONE ? entity.primaryKeyType() : keyType;
+			if (keyType == PrimaryKeyType.AUTO) {
+				if (pkDataType != PrimaryKeyDataType.BIGINT && pkDataType != PrimaryKeyDataType.INT) {
+					pkDataType = PrimaryKeyDataType.BIGINT;
+					len = NOT_DEFINE_LEN;
+				}
+			}
+			
 			DataType dataType;
 			switch (pkDataType) {
 				case BIGINT:
@@ -668,10 +678,6 @@ public class MYSqlTableCreator implements TableCreator{
 					len = len == NOT_DEFINE_LEN ? CHAR_PRIMARY_KEY_DEFAULT_LENGTH : len;
 					break;
 			}
-			
-			//主键类型
-			PrimaryKeyType keyType = xlpId.type();
-			keyType = keyType == PrimaryKeyType.NONE ? entity.primaryKeyType() : keyType;
 			
 			int decimalLength = 0;
 			
