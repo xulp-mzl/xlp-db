@@ -450,7 +450,7 @@ public class MYSqlTableCreator implements TableCreator{
 				sb.append(wrap(name)).append(" ");
 			}
 			String[] _columns = columns[i].split(",");
-			sb.append(XLPStringUtil.join(_columns, warpStr, warpStr, ",", true, true));
+			sb.append(XLPStringUtil.join(_columns, "(" + warpStr, warpStr + ")", ",", true, true));
 		}
 	}
 
