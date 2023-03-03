@@ -158,8 +158,6 @@ public final class DBSession{
 		if (count > 0) {
 			Object[] ids = insertSQL.getPrimaryKey().getCurrentValues();
 			id = ids.length == 0 ? null : (ids.length == 1 ? ids[0] : ids);
-//			BeanUtil.fillBeanKeys(bean, ids);
-//			LOGGER.debug("数据保存成功！写入的数据是：\n" + bean.toString());
 		}
 		return id;
 	}

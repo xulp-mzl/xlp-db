@@ -7,6 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.xlp.db.tableoption.xlpenum.DBEngine;
+import org.xlp.db.tableoption.xlpenum.PrimaryKeyDataType;
+import org.xlp.db.tableoption.xlpenum.PrimaryKeyType;
 import org.xlp.db.tableoption.xlpenum.TableType;
 
 /**
@@ -41,4 +43,25 @@ public @interface XLPEntity {
 	 * 视图类型，默认为数据表实体
 	 */
 	public TableType tableType() default TableType.TABLE;
+	
+	/**
+	 * 主键类型
+	 */
+	public PrimaryKeyType primaryKeyType() default PrimaryKeyType.UUID;
+	
+	/**
+	 * 主键描述
+	 * @return
+	 */
+	public String primaryKeyDescriptor() default "";
+	
+	/**
+	 * 主键长度, 默认值适用于字符串类
+	 */
+	public int primaryKeyLength() default -1;
+
+	/**
+	 * 主键数据类型
+	 */
+	public PrimaryKeyDataType primaryKeyDataType() default PrimaryKeyDataType.VARCHAR;
 }

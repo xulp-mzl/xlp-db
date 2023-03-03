@@ -2,6 +2,7 @@ package org.xlp.db.tableoption.key;
 
 
 import org.xlp.db.exception.EntityException;
+import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.tableoption.annotation.XLPId;
 import org.xlp.db.tableoption.xlpenum.PrimaryKeyType;
 import org.xlp.javabean.JavaBeanPropertiesDescriptor;
@@ -127,6 +128,8 @@ public final class CompoundPrimaryKey extends KeyAbstract{
 		if(len == 0)
 			LOGGER.warn("给定的bean对象实体没有相关的主键属性");
 		
+		XLPEntity entity = beanClass.getAnnotation(XLPEntity.class);
+		
 		XLPId xlpId;
 		for (int i = 0; i <len; i++) {
 			count ++;
@@ -139,7 +142,7 @@ public final class CompoundPrimaryKey extends KeyAbstract{
 				LOGGER.warn("读取主键值时产生异常，对应的字段名：" + pds[i].getFieldName());
 				XLPOutputInfoUtil.println(e);
 			}
-			types[i] = xlpId.type();
+			types[i] = xlpId.type() == PrimaryKeyType.NONE ? entity.primaryKeyType() : xlpId.type();
 			isPrimitives[i] = pds[i].getFiledClassType().isPrimitive();
 			
 			if (types[i] == PrimaryKeyType.UUID && XLPStringUtil.isEmpty((String) values[i])) {

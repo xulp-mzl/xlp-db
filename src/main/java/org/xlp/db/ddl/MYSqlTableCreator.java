@@ -15,11 +15,14 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xlp.assertion.AssertUtils;
+import org.xlp.db.ddl.annotation.XLPCompoundIndex;
 import org.xlp.db.ddl.annotation.XLPIndex;
+import org.xlp.db.ddl.type.IndexType;
 import org.xlp.db.tableoption.annotation.XLPColumn;
 import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.tableoption.annotation.XLPId;
 import org.xlp.db.tableoption.xlpenum.DataType;
+import org.xlp.db.tableoption.xlpenum.PrimaryKeyDataType;
 import org.xlp.db.tableoption.xlpenum.PrimaryKeyType;
 import org.xlp.db.tableoption.xlpenum.TableType;
 import org.xlp.db.utils.XLPDBUtil;
@@ -60,6 +63,11 @@ public class MYSqlTableCreator implements TableCreator{
 	 * 特殊字符的包装字符串, 默认包装字符串是`
 	 */
 	private String warpStr = DEFAULT_WRAP_STR;
+	
+	/**
+	 * 字符串类型字段默认长度
+	 */
+	private static final int CHAR_PRIMARY_KEY_DEFAULT_LENGTH = 64;
 
 	/**
 	 * 数据库连接
@@ -353,7 +361,7 @@ public class MYSqlTableCreator implements TableCreator{
 					// 给表的列名加上包装字符
 					columnName = wrap(columnName);
 					primaryKeys.add(columnName);
-					columnSql = createColumnSql(xlpId, columnName);
+					columnSql = createColumnSql(xlpId, columnName, xlpEntity);
 				} else {
 					columnSql = XLPStringUtil.EMPTY;
 				}
@@ -388,8 +396,15 @@ public class MYSqlTableCreator implements TableCreator{
 					.append(")");
 		}
 
+		// 单列索引
 		for (Entry<String, XLPIndex> entry : indexMap.entrySet()) {
 			tableSql.append(",\n").append(createIndexSql(entry.getKey(), entry.getValue()));
+		}
+		
+		//组合索引
+		XLPCompoundIndex compoundIndex = entityClass.getAnnotation(XLPCompoundIndex.class);
+		if (compoundIndex != null) {
+			appendCompoundIndexSql(compoundIndex, tableSql);
 		}
 
 		tableSql.append("\n)ENGINE=").append(xlpEntity.dbEngine().getDbEngineName()).append(" CHARSET=")
@@ -404,6 +419,42 @@ public class MYSqlTableCreator implements TableCreator{
 	}
 
 	/**
+	 * 拼接复合组件SQL片段
+	 * 
+	 * @param compoundIndex
+	 * @param sb
+	 */
+	private void appendCompoundIndexSql(XLPCompoundIndex compoundIndex, StringBuilder sb) {
+		String[] columns = compoundIndex.column();
+		String[] names = compoundIndex.name();
+		IndexType[] indexTypes = compoundIndex.indexType();
+		int itypeLen = indexTypes.length, nameLen = names.length;
+		for(int i = 0, len = columns.length; i < len; i++){
+			sb.append(",\n");
+			IndexType indexType = i < itypeLen ? indexTypes[i] : IndexType.NORMAL;
+			switch (indexType) {
+				case FULLTEXT:
+					sb.append("FULLTEXT INDEX ");
+					break;
+				case NORMAL:
+					sb.append("INDEX ");		
+					break;
+				case UNIQUE:
+					sb.append("UNIQUE INDEX ");
+					break;
+				default:
+					break;
+			}
+			String name = i < nameLen ? names[i] : XLPStringUtil.EMPTY; 
+			if (!XLPStringUtil.isEmpty(name)) { 
+				sb.append(wrap(name)).append(" ");
+			}
+			String[] _columns = columns[i].split(",");
+			sb.append(XLPStringUtil.join(_columns, warpStr, warpStr, ",", true, true));
+		}
+	}
+
+	/**
 	 * 创建索引列sql
 	 * 
 	 * @param columnName
@@ -414,17 +465,17 @@ public class MYSqlTableCreator implements TableCreator{
 	private String createIndexSql(String columnName, XLPIndex xlpIndex) {
 		StringBuilder sb = new StringBuilder();
 		switch (xlpIndex.indexType()) {
-		case FULLTEXT:
-			sb.append("FULLTEXT INDEX ");
-			break;
-		case NORMAL:
-			sb.append("INDEX ");		
-			break;
-		case UNIQUE:
-			sb.append("UNIQUE INDEX ");
-			break;
-		default:
-			break;
+			case FULLTEXT:
+				sb.append("FULLTEXT INDEX ");
+				break;
+			case NORMAL:
+				sb.append("INDEX ");		
+				break;
+			case UNIQUE:
+				sb.append("UNIQUE INDEX ");
+				break;
+			default:
+				break;
 		}
 		//索引名称
 		String name = xlpIndex.name();
@@ -583,34 +634,58 @@ public class MYSqlTableCreator implements TableCreator{
 	 * @param xlpId
 	 * @param columnName
 	 *            数据表列名称(已被处理过， 无需在处理)
+	 * @param entity
+	 * 			  XLPEntity注解
 	 * @return 假如参数为null，则返回""
 	 */
-	protected String createColumnSql(XLPId xlpId, String columnName) {
+	protected String createColumnSql(XLPId xlpId, String columnName, XLPEntity entity) {
 		StringBuilder sb = new StringBuilder(columnName).append(" ");
 		if (xlpId != null) {
-			DataType dataType = xlpId.dataType();
+			PrimaryKeyDataType pkDataType = xlpId.dataType();
+			pkDataType = pkDataType == PrimaryKeyDataType.NONE ? entity.primaryKeyDataType() : pkDataType;
+			
 			int len = xlpId.length();
-			int decimalLength = xlpId.decimalLength();
-			boolean zeroFill = xlpId.zeroFill();
-			boolean isNull = xlpId.isNull();
-			String defaultValue = xlpId.defaultValue();
-			String comment = xlpId.descriptor();
+			len = len == NOT_DEFINE_LEN ? entity.primaryKeyLength() : len;
+			
+			DataType dataType;
+			switch (pkDataType) {
+				case BIGINT:
+					dataType = DataType.BIGINT;
+					break;
+				case INT:
+					dataType = DataType.INT;
+					break;
+				case CHAR:
+					dataType = DataType.CHAR;
+					len = len == NOT_DEFINE_LEN ? CHAR_PRIMARY_KEY_DEFAULT_LENGTH : len;
+					break;
+				case VARCHAR:
+					dataType = DataType.VARCHAR;
+					len = len == NOT_DEFINE_LEN ? CHAR_PRIMARY_KEY_DEFAULT_LENGTH : len;
+					break;
+				default:
+					dataType = DataType.VARCHAR;
+					len = len == NOT_DEFINE_LEN ? CHAR_PRIMARY_KEY_DEFAULT_LENGTH : len;
+					break;
+			}
 			
 			//主键类型
 			PrimaryKeyType keyType = xlpId.type();
+			keyType = keyType == PrimaryKeyType.NONE ? entity.primaryKeyType() : keyType;
+			
+			int decimalLength = 0;
+			
+			String comment = xlpId.descriptor();
+			comment = XLPStringUtil.isEmpty(comment) ? entity.primaryKeyDescriptor() : comment;
 			
 			addTypeSql(sb, dataType, len, decimalLength);
-			addZeroFillSql(sb, dataType, zeroFill);
 			// 追加字段是否不为空
-			if (isNull) {
-				sb.append("NOT NULL ");
-			}
+			sb.append("NOT NULL ");
 			// 添加自增功能
 			if (keyType == PrimaryKeyType.AUTO) {
 				sb.append("auto_increment ");
 			}
 			
-			addDefaultValueSql(sb, dataType, defaultValue);
 			// 判断字段描述是否为空，假如非空，追加字段描述
 			if (!XLPStringUtil.isEmpty(comment)) {
 				sb.append("COMMENT '").append(transferredChar(comment)).append("'");

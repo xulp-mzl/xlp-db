@@ -13,5 +13,7 @@ public enum PrimaryKeyType {
 	//uuid
 	UUID,
 	//普通类型
-	NORMAL
+	NORMAL,
+	//默认类型
+	NONE
 }

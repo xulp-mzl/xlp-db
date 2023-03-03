@@ -2,6 +2,7 @@ package org.xlp.db.tableoption.key;
 
 
 import org.xlp.db.exception.EntityException;
+import org.xlp.db.tableoption.annotation.XLPEntity;
 import org.xlp.db.tableoption.annotation.XLPId;
 import org.xlp.db.tableoption.xlpenum.PrimaryKeyType;
 import org.xlp.db.utils.BeanUtil;
@@ -103,7 +104,8 @@ import org.xlp.utils.XLPStringUtil;
 			} catch (Exception e) {
 				LOGGER.warn("读取主键值时产生异常，对应的字段名：" + pd.getFieldName());
 			}
-			type = xlpId.type();
+			XLPEntity entity = beanClass.getAnnotation(XLPEntity.class);
+			type = xlpId.type() == PrimaryKeyType.NONE ? entity.primaryKeyType() : xlpId.type();
 			isPrimitive = pd.getFiledClassType().isPrimitive();
 		}else {
 			LOGGER.warn("给定的bean对象实体没有相关的主键");
