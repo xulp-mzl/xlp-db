@@ -449,8 +449,22 @@ public class MYSqlTableCreator implements TableCreator{
 			if (!XLPStringUtil.isEmpty(name)) { 
 				sb.append(wrap(name)).append(" ");
 			}
-			String[] _columns = columns[i].split(",");
-			sb.append(XLPStringUtil.join(_columns, "(" + warpStr, warpStr + ")", ",", true, true));
+			String _cloumn = columns[i];
+			if(!XLPStringUtil.isEmpty(_cloumn)){
+				String[] _columns = columns[i].split(",");
+				boolean start = true;
+				sb.append("(");
+				for (String c : _columns) {
+					if (!XLPStringUtil.isEmpty(c)) {
+						if (!start) {
+							sb.append(",");
+						}
+						sb.append(wrap(c.trim()));
+						start = false;
+					}
+				}
+				sb.append(")");
+			}
 		}
 	}
 
